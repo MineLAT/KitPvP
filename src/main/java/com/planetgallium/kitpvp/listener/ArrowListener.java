@@ -8,6 +8,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -22,6 +23,13 @@ public class ArrowListener implements Listener {
 	public ArrowListener(Game plugin) {
 		this.plugin = plugin;
 		this.config = plugin.getResources().getConfig();
+	}
+
+	@EventHandler
+	public void onArrow(ProjectileHitEvent e) {
+		if (e.getEntity() instanceof org.bukkit.entity.Arrow && config.getBoolean("Combat.ArrowClean.Enabled", true)) {
+			e.getEntity().remove();
+		}
 	}
 
 	@EventHandler
@@ -40,6 +48,9 @@ public class ArrowListener implements Listener {
 					doArrowReturnIfEnabled(shooter, damagedPlayer);
 				}
 			}
+            if (config.getBoolean("Combat.ArrowClean.Enabled", true)) {
+                arrow.remove();
+            }
 		}
 	}
 
