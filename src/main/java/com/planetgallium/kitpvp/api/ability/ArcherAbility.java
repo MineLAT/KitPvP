@@ -33,6 +33,7 @@ public class ArcherAbility extends ItemAbility {
 
         // Item
         if (section.isSet("Item")) {
+            // TODO: Make material configurable
             this.fireItem = new ItemPredicate(FIRE_MATERIAL, Toolkit.translate(section.getString("Item.Fire")));
             this.noFireItem = new ItemPredicate(NO_FIRE_MATERIAL, Toolkit.translate(section.getString("Item.NoFire")));
         } else {

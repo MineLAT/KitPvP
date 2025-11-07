@@ -40,7 +40,7 @@ public abstract class ItemAbility extends Ability {
 
         // Item
         if (section.isSet("Item")) {
-            this.activator = ItemPredicate.valueOf(type(), section.getConfigurationSection("Item"));
+            this.activator = ItemPredicate.valueOf(XMaterial.matchXMaterial(section.getString("Item.Material", "")).orElse(type()), section.getConfigurationSection("Item"));
 
             this.itemAmount = section.getInt("Item.Amount", 0);
         } else {

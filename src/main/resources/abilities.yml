@@ -22,6 +22,7 @@ Abilities:
     Enabled: true
     Cooldown: 0
     Item:
+      Material: IRON_HOE
       Name: '&aGun &7(Right Click)'
       Amount: 5
     Sound:
@@ -32,6 +33,7 @@ Abilities:
     Enabled: true
     Cooldown: 0
     Item:
+      Material: COAL
       Name: '&aTNT Trail &7(Right Click)'
       Amount: 3
     Message:
@@ -45,6 +47,7 @@ Abilities:
     Enabled: true
     Cooldown: 0
     Item:
+      Material: SADDLE
       Name: '&aLauncher &7(Right Click)'
       Amount: 3
     Message:
@@ -58,6 +61,7 @@ Abilities:
     Enabled: true
     Cooldown: 0
     Item:
+      Material: ENDER_EYE
       Name: '&aNearest Player Teleporter &7(Right Click)'
       Amount: 3
     Message:
@@ -71,6 +75,7 @@ Abilities:
     Enabled: true
     Cooldown: 0
     Item:
+      Material: GLASS_BOTTLE
       Name: '&aPotion Switcher &7(Right Click)'
     Message:
       Message: '%prefix% &7You now have a new potion.'
@@ -83,6 +88,7 @@ Abilities:
     Enabled: true
     Cooldown: 0
     Item:
+      Material: NETHER_STAR
       Name: '&aVanish Stars &7(Right Click)'
       Amount: 3
     Message:
@@ -96,6 +102,7 @@ Abilities:
     Enabled: true
     Cooldown: 0
     Item:
+      Material: BLAZE_ROD
       Name: '&aLightning Strike &7(Click Player)'
       Amount: 3
     Message:
@@ -109,6 +116,7 @@ Abilities:
     Enabled: true
     Cooldown: 0
     Item:
+      Material: GHAST_TEAR
       Name: '&aBlood Suckers &7(Click Player)'
       Amount: 3
     Message:
@@ -122,6 +130,7 @@ Abilities:
     Enabled: true
     Cooldown: 0
     Item:
+      Material: EGG
       Name: '&aSwitcher Pellets &7(Right Click)'
       Amount: 4
     Message:

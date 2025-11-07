@@ -197,34 +197,38 @@ public class ItemListener implements Listener {
 	public void onProjectileHitsEntity(EntityDamageByEntityEvent e) {
 		if (e.getEntity() instanceof Player && e.getCause() == DamageCause.PROJECTILE) {
 
-			if (e.getDamager() instanceof Snowball) {
+			if (e.getDamager() instanceof ThrowableProjectile) {
+                if (e.getDamager() instanceof Snowball) {
+                    Player damagedPlayer = (Player) e.getEntity();
+                    Snowball snowball = (Snowball) e.getDamager();
+                    if (hitBySnowball(damagedPlayer, snowball)) {
+                        return;
+                    }
+                }
 				Player damagedPlayer = (Player) e.getEntity();
-				Snowball snowball = (Snowball) e.getDamager();
-				hitBySnowball(damagedPlayer, snowball);
-
-			} else if (e.getDamager() instanceof Egg) {
-				Player damagedPlayer = (Player) e.getEntity();
-				Egg egg = (Egg) e.getDamager();
-				hitByEgg(damagedPlayer, egg);
+                ThrowableProjectile projectile = (ThrowableProjectile) e.getDamager();
+				hitByProjectile(damagedPlayer, projectile);
 			}
 		}
 	}
 
-	private void hitBySnowball(Player damagedPlayer, Snowball snowball) {
+	private boolean hitBySnowball(Player damagedPlayer, Snowball snowball) {
 		if (snowball.getCustomName() != null && snowball.getCustomName().equals("bullet")) {
 			if (Toolkit.inArena(damagedPlayer) && arena.getKits().playerHasKit(damagedPlayer.getUniqueId())) {
 				damagedPlayer.damage(4.5);
 			}
+            return true;
 		}
+        return false;
 	}
 
-	private void hitByEgg(Player damagedPlayer, Egg egg) {
-        if (!(egg.getShooter() instanceof Player)) {
+	private void hitByProjectile(Player damagedPlayer, ThrowableProjectile projectile) {
+        if (!(projectile.getShooter() instanceof Player)) {
             return;
         }
 
         final TricksterAbility ability = (TricksterAbility) this.itemAbilities.get(ItemAbility.TRICKSTER);
-        if (!ability.isItem(egg.getItem())) {
+        if (!ability.isItem(projectile.getItem())) {
             return;
         }
 
@@ -232,7 +236,7 @@ public class ItemListener implements Listener {
             return;
         }
 
-        Player shooter = (Player) egg.getShooter();
+        Player shooter = (Player) projectile.getShooter();
         Location shooterLocation = shooter.getLocation();
 
         if (!utilities.isCombatActionPermittedInRegion(damagedPlayer)) {
