@@ -5,6 +5,7 @@
 Abilities:
   Archer:
     Enabled: true
+    Cooldown: 0
     Item:
       Fire: '&aFire Arrows &eON &7(Right Click)'
       NoFire: '&aFire Arrows &cOFF &7(Right Click)'
@@ -19,6 +20,7 @@ Abilities:
       Enabled: true
   Soldier:
     Enabled: true
+    Cooldown: 0
     Item:
       Name: '&aGun &7(Right Click)'
       Amount: 5
@@ -28,6 +30,7 @@ Abilities:
       Enabled: true
   Bomber:
     Enabled: true
+    Cooldown: 0
     Item:
       Name: '&aTNT Trail &7(Right Click)'
       Amount: 3
@@ -40,6 +43,7 @@ Abilities:
       Enabled: true
   Kangaroo:
     Enabled: true
+    Cooldown: 0
     Item:
       Name: '&aLauncher &7(Right Click)'
       Amount: 3
@@ -52,6 +56,7 @@ Abilities:
       Enabled: true  
   Warper:
     Enabled: true
+    Cooldown: 0
     Item:
       Name: '&aNearest Player Teleporter &7(Right Click)'
       Amount: 3
@@ -64,6 +69,7 @@ Abilities:
       Enabled: true
   Witch:
     Enabled: true
+    Cooldown: 0
     Item:
       Name: '&aPotion Switcher &7(Right Click)'
     Message:
@@ -75,6 +81,7 @@ Abilities:
       Enabled: true
   Ninja:
     Enabled: true
+    Cooldown: 0
     Item:
       Name: '&aVanish Stars &7(Right Click)'
       Amount: 3
@@ -87,6 +94,7 @@ Abilities:
       Enabled: true
   Thunderbolt:
     Enabled: true
+    Cooldown: 0
     Item:
       Name: '&aLightning Strike &7(Click Player)'
       Amount: 3
@@ -99,6 +107,7 @@ Abilities:
       Enabled: true
   Vampire:
     Enabled: true
+    Cooldown: 0
     Item:
       Name: '&aBlood Suckers &7(Click Player)'
       Amount: 3
@@ -111,6 +120,7 @@ Abilities:
       Enabled: true
   Trickster:
     Enabled: true
+    Cooldown: 0
     Item:
       Name: '&aSwitcher Pellets &7(Right Click)'
       Amount: 4

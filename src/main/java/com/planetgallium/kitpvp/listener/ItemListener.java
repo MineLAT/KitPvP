@@ -13,6 +13,7 @@ import com.planetgallium.kitpvp.api.ability.TricksterAbility;
 import com.planetgallium.kitpvp.api.ability.VampireAbility;
 import com.planetgallium.kitpvp.api.ability.WarperAbility;
 import com.planetgallium.kitpvp.api.ability.WitchAbility;
+import com.planetgallium.kitpvp.api.util.Cooldown;
 import com.planetgallium.kitpvp.game.Arena;
 import com.planetgallium.kitpvp.game.Utilities;
 import com.planetgallium.kitpvp.util.Resource;
@@ -101,6 +102,12 @@ public class ItemListener implements Listener {
 
             if (!utilities.isCombatActionPermittedInRegion(player)) {
                 continue;
+            }
+
+            Cooldown cooldownRemaining = arena.getCooldowns().getRemainingCooldown(player, ability);
+            if (cooldownRemaining.toSeconds() > 0) {
+                player.sendMessage(resources.getMessages().fetchString("Messages.Error.CooldownAbility").replace("%cooldown%", cooldownRemaining.formatted(false)));
+                return;
             }
 
             consumer.accept(ability);
