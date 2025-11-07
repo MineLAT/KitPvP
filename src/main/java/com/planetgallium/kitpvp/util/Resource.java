@@ -3,7 +3,10 @@ package com.planetgallium.kitpvp.util;
 import java.io.*;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Consumer;
 
 import com.planetgallium.kitpvp.Game;
 import org.bukkit.ChatColor;
@@ -16,12 +19,36 @@ import org.jetbrains.annotations.Nullable;
 
 public class Resource extends YamlConfiguration {
 
+    private static Resource EMPTY = new Resource(Game.getInstance(), "none") {
+        @Override
+        public void load() {
+            // empty method
+        }
+
+        @Override
+        public void copyDefaults() {
+            // empty method
+        }
+
+        @Override
+        public void save() {
+            // empty method
+        }
+    };
+
+    @NotNull
+    public static Resource empty() {
+        return EMPTY;
+    }
+
 	private final String name;
 	private final File file;
 	private final List<String> copyDefaultExemptions;
 
 	private final Plugin plugin;
 	private final String path;
+
+    private final Set<Consumer<Resource>> listeners = new HashSet<>();
 
 	public Resource(Plugin plugin, String path) {
 		this.plugin = plugin;
@@ -31,6 +58,11 @@ public class Resource extends YamlConfiguration {
 		this.name = Paths.get(path).getFileName().toString();
 		this.copyDefaultExemptions = new ArrayList<>();
 	}
+
+    public void listen(@NotNull Consumer<Resource> consumer) {
+        listeners.add(consumer);
+        consumer.accept(this);
+    }
 
 	public void load() {
 		if (!file.getParentFile().exists()) {
@@ -54,6 +86,10 @@ public class Resource extends YamlConfiguration {
 		} catch (IOException | InvalidConfigurationException e) {
 			e.printStackTrace();
 		}
+
+        for (Consumer<Resource> listener : listeners) {
+            listener.accept(this);
+        }
 	}
 
 	public void copyDefaults() {

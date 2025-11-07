@@ -38,7 +38,7 @@ public class EventListener implements Listener {
 					Ability abilityResult = arena.getAbilities().getAbilityByActivator(currentItem);
 
 					if (abilityResult != null) {
-                        abilityResult.run(e, p);
+                        abilityResult.run(e, p, currentItem);
 					}
 				}
 			}

@@ -3,6 +3,7 @@ package com.planetgallium.kitpvp.api.util;
 import com.cryptomorin.xseries.XMaterial;
 import com.planetgallium.kitpvp.util.Toolkit;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +51,10 @@ public class ItemPredicate implements Predicate<ItemStack> {
 
     @NotNull
     public static ItemPredicate valueOf(@NotNull XMaterial material, @Nullable ConfigurationSection section) {
+        if (material == XMaterial.AIR) {
+            return empty();
+        }
+
         String name = null;
 
         if (section != null) {
@@ -75,6 +80,9 @@ public class ItemPredicate implements Predicate<ItemStack> {
 
     @Override
     public boolean test(ItemStack item) {
+        if (item == null) {
+            return false;
+        }
         if (XMaterial.matchXMaterial(item) != material) {
             return false;
         }
@@ -87,6 +95,18 @@ public class ItemPredicate implements Predicate<ItemStack> {
             }
         }
         return true;
+    }
+
+    @Nullable
+    public Integer slot(@NotNull Player player) {
+        int inventorySize = Toolkit.versionToNumber() == 18 ? 39 : 45;
+        for (int i = 0; i <= inventorySize; i++) {
+            ItemStack item = player.getInventory().getItem(i);
+            if (test(item)) {
+                return i;
+            }
+        }
+        return null;
     }
 
     @NotNull

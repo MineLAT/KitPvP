@@ -13,6 +13,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
@@ -24,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.UnaryOperator;
 
 public class Ability {
 
@@ -44,12 +46,12 @@ public class Ability {
     }
 
     private final String name;
-    private ItemPredicate activator;
-    private Cooldown cooldown;
-    private Message message;
-    private XSound.Record sound;
-    private final List<PotionEffect> effects;
-    private final List<String> commands;
+    protected ItemPredicate activator;
+    protected Cooldown cooldown;
+    protected Message message;
+    protected XSound.Record sound;
+    protected final List<PotionEffect> effects;
+    protected final List<String> commands;
 
     public Ability(@NotNull String name) {
         this.name = name;
@@ -72,11 +74,18 @@ public class Ability {
     @ApiStatus.Internal
     public void deserialize(@NotNull ConfigurationSection section) {
         // Activator
-        this.activator = ItemPredicate.valueOf(section.getConfigurationSection("Activator"))
-                .orElseThrow(() -> new IllegalArgumentException("Cannot find activator configuration on '" + name + "' ability"));
+        if (section.isSet("Activator")) {
+            this.activator = ItemPredicate.valueOf(section.getConfigurationSection("Activator")).orElse(ItemPredicate.empty());
+        } else {
+            this.activator = ItemPredicate.empty();
+        }
 
         // Cooldown
-        this.cooldown = Cooldown.valueOf(section.get("Cooldown")).orElse(Cooldown.ZERO);
+        if (section.isSet("Cooldown")) {
+            this.cooldown = Cooldown.valueOf(section.get("Cooldown")).orElse(Cooldown.ZERO);
+        } else {
+            this.cooldown = Cooldown.ZERO;
+        }
 
         // Message
         if (section.isSet("Message")) {
@@ -86,10 +95,12 @@ public class Ability {
             final int range = section.getInt("Message.Range", 5);
 
             this.message = new Ability.Message(enabled, self, broadcast, range);
+        } else {
+            this.message = null;
         }
 
         // Sound
-        if (section.isSet("Sound")) {
+        if (section.isSet("Sound") && section.getBoolean("Sound.Enabled", true)) {
             final String category = section.getString("Sound.Category", null);
             final String soundName = section.getString("Sound.Sound");
             final double pitch = section.getDouble("Sound.Pitch", 1.0d);
@@ -97,6 +108,8 @@ public class Ability {
             final long seed = section.getLong("Sound.Seed", Long.MIN_VALUE);
 
             this.sound = XSound.parse((category == null ? "" : category + "@") + soundName + ", " + pitch + ", " + volume + (seed == Long.MIN_VALUE ? "" : ", " + seed));
+        } else {
+            this.sound = null;
         }
 
         // Effects
@@ -110,11 +123,15 @@ public class Ability {
 
                 this.effects.add(Toolkit.parsePotionEffect(potion, amplifier, duration));
             }
+        } else {
+            this.effects.clear();
         }
 
         // Commands
         if (section.isSet("Commands")) {
             this.commands.addAll(section.getStringList("Commands"));
+        } else {
+            this.commands.clear();
         }
     }
 
@@ -127,9 +144,9 @@ public class Ability {
         }
         if (message != null) {
             section.set("Message.Enabled", message.enabled());
-            section.set("Message.Message", message.self());
+            section.set("Message.Message", Toolkit.toNormalColorCodes(message.self()));
             if (message.broadcast() != null) {
-                section.set("Message.Broadcast", message.broadcast());
+                section.set("Message.Broadcast", Toolkit.toNormalColorCodes(message.broadcast()));
                 section.set("Message.Range", message.range());
             }
         }
@@ -192,7 +209,45 @@ public class Ability {
         return Collections.unmodifiableList(commands);
     }
 
-    public void run(@NotNull PlayerInteractEvent event, @NotNull Player player) {
+    public boolean isItem(@NotNull ItemStack item) {
+        return activator.test(item);
+    }
+
+    public void run(@NotNull Player player) {
+        run(player, null, s -> Toolkit.translate(player, s));
+    }
+
+    public void run(@NotNull Player player, @Nullable Player agent) {
+        run(player, agent, s -> {
+            if (agent != null) {
+                s = s.replace("%player%", agent.getName());
+            }
+            return Toolkit.translate(player, s);
+        });
+    }
+
+    public void run(@NotNull Player player, @Nullable Player agent, @NotNull UnaryOperator<String> parser) {
+        if (this.message != null) {
+            this.message.send(player, parser);
+        }
+
+        if (this.sound != null) {
+            this.sound.soundPlayer().play(Collections.singletonList(player), player.getLocation());
+            if (agent != null) {
+                this.sound.soundPlayer().play(Collections.singletonList(agent), agent.getLocation());
+            }
+        }
+
+        if (!this.effects.isEmpty()) {
+            this.effects.forEach(player::addPotionEffect);
+        }
+
+        if (!this.commands.isEmpty()) {
+            Toolkit.runCommands(player, this.commands, "none", "none");
+        }
+    }
+
+    public void run(@NotNull PlayerInteractEvent event, @NotNull Player player, @NotNull ItemStack item) {
         final PlayerAbilityEvent abilityEvent = new PlayerAbilityEvent(player, this, event);
         Bukkit.getPluginManager().callEvent(abilityEvent);
         if (abilityEvent.isCancelled()) {
@@ -219,28 +274,17 @@ public class Ability {
             return;
         }
 
-        if (this.message != null) {
-            this.message.send(player);
-        }
-
-        if (this.sound != null) {
-            this.sound.soundPlayer().play(player.getLocation());
-        }
-
-        if (!this.effects.isEmpty()) {
-            this.effects.forEach(player::addPotionEffect);
-        }
-
-        if (!this.commands.isEmpty()) {
-            Toolkit.runCommands(player, this.commands, "none", "none");
-        }
+        run(player);
 
         if (this.cooldown == Cooldown.ZERO) {
-            ItemStack abilityItem = Toolkit.getHandItemForInteraction(event);
-            abilityItem.setAmount(abilityItem.getAmount() - 1);
+            item.setAmount(item.getAmount() - 1);
         } else {
             arena.getCooldowns().setAbilityCooldown(player.getUniqueId(), this.name);
         }
+    }
+
+    public void run(@NotNull PlayerInteractEntityEvent event, @NotNull Player player, @NotNull Player agent, @NotNull ItemStack item) {
+        // empty method
     }
 
     public static class Message {
@@ -276,16 +320,20 @@ public class Ability {
         }
 
         public void send(@NotNull Player player) {
+            send(player, s -> Toolkit.translate(player, s));
+        }
+
+        public void send(@NotNull Player player, @NotNull UnaryOperator<String> parser) {
             if (!this.enabled) {
                 return;
             }
 
             if (this.self != null) {
-                player.sendMessage(Toolkit.translate(player, this.self));
+                player.sendMessage(parser.apply(this.self));
             }
 
             if (this.broadcast != null) {
-                final String msg = Toolkit.translate(player, this.broadcast);
+                final String msg = parser.apply(this.broadcast);
                 if (this.range > 0) {
                     for (Entity entity : player.getNearbyEntities(this.range, this.range, this.range)) {
                         if (entity instanceof Player) {

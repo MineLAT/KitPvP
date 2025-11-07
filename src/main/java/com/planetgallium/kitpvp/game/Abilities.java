@@ -29,7 +29,7 @@ public class Abilities {
 
     public Ability getAbilityByActivator(ItemStack potentialActivator) {
         for (Ability ability : loaded) {
-            if (ability.activator().test(potentialActivator)) {
+            if (ability.isItem(potentialActivator)) {
                 return ability;
             }
         }
