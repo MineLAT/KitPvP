@@ -120,9 +120,10 @@ public class Resources {
 	}
 
 	public void addAbilityResource(Ability ability) {
-		String abilityName = ability.getName();
+		String abilityName = ability.name();
 		Resource abilityResource = new Resource(plugin, "abilities/" + abilityName + ".yml");
-		ability.toResource(abilityResource);
+		ability.serialize(abilityResource);
+        abilityResource.save();
 
 		abilityToResource.put(abilityName, abilityResource);
 		abilityToResource.get(abilityName).load();

@@ -1,6 +1,30 @@
-package com.planetgallium.kitpvp.util;
+package com.planetgallium.kitpvp.api.util;
+
+import org.bukkit.configuration.ConfigurationSection;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Optional;
 
 public class Cooldown {
+
+    public static final Cooldown ZERO = new Cooldown(0, 0, 0, 0);
+
+    @NotNull
+    public static Optional<Cooldown> valueOf(@Nullable Object object) {
+        if (object instanceof ConfigurationSection) {
+            final ConfigurationSection section = (ConfigurationSection) object;
+            if (section.isSet("Cooldown")) {
+                return Optional.of(new Cooldown(section.getString("Cooldown")));
+            }
+            // TODO: Parse section as cooldown
+        } else if (object instanceof String) {
+            return Optional.of(new Cooldown((String) object));
+        } else if (object instanceof Number) {
+            // TODO: Parse number as milliseconds
+        }
+        return Optional.empty();
+    }
 
 	private int days;
 	private int hours;

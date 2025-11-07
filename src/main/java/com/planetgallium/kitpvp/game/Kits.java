@@ -1,12 +1,10 @@
 package com.planetgallium.kitpvp.game;
 
-import com.cryptomorin.xseries.XMaterial;
-import com.cryptomorin.xseries.XPotion;
-import com.cryptomorin.xseries.XSound;
 import com.planetgallium.kitpvp.Game;
 import com.planetgallium.kitpvp.api.Ability;
 import com.planetgallium.kitpvp.api.Kit;
 import com.planetgallium.kitpvp.api.PlayerSelectKitEvent;
+import com.planetgallium.kitpvp.api.util.Cooldown;
 import com.planetgallium.kitpvp.item.AttributeParser;
 import com.planetgallium.kitpvp.util.*;
 import org.bukkit.Bukkit;
@@ -135,23 +133,7 @@ public class Kits {
 
         //          ABILITY         //
 
-        Ability sampleAbility = new Ability(kit.getName() + "-Blank");
-
-        ItemStack activator = XMaterial.EMERALD.parseItem();
-        ItemMeta activatorMeta = activator.getItemMeta();
-
-        activatorMeta.setDisplayName(Toolkit.translate("&aBlank Kit Ability &7(Right Click)"));
-        activator.setItemMeta(activatorMeta);
-
-        sampleAbility.setActivator(activator);
-
-        sampleAbility.setMessage("%prefix% &7You have used your ability.");
-        sampleAbility.setSound(XSound.BLOCK_NOTE_BLOCK_PLING.parseSound(), 1, 1);
-        sampleAbility.addEffect(XPotion.SPEED.getPotionEffectType(), 1, 10);
-        sampleAbility.addCommand("console: This command is run from the console, you can use %player%");
-        sampleAbility.addCommand("player: This command is run from the player, you can use %player%");
-
-        resources.addAbilityResource(sampleAbility);
+        resources.addAbilityResource(Ability.sample(kit.getName()));
 
         return kit;
     }

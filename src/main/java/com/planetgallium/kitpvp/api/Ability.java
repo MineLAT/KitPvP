@@ -1,103 +1,305 @@
 package com.planetgallium.kitpvp.api;
 
-import com.planetgallium.kitpvp.util.Cooldown;
-import com.planetgallium.kitpvp.util.Resource;
+import com.cryptomorin.xseries.XMaterial;
+import com.cryptomorin.xseries.XPotion;
+import com.cryptomorin.xseries.XSound;
+import com.planetgallium.kitpvp.Game;
+import com.planetgallium.kitpvp.api.util.ItemPredicate;
+import com.planetgallium.kitpvp.api.util.Cooldown;
+import com.planetgallium.kitpvp.game.Arena;
+import com.planetgallium.kitpvp.util.Resources;
 import com.planetgallium.kitpvp.util.Toolkit;
 import org.bukkit.Bukkit;
-import org.bukkit.Sound;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class Ability {
 
+    @NotNull
+    public static Ability sample(@NotNull String prefix) {
+        return new Ability(
+                prefix + "-Blank",
+                new ItemPredicate(XMaterial.EMERALD),
+                Cooldown.ZERO,
+                new Message(true, "%prefix% &7You have used your ability.", null, 0),
+                XSound.BLOCK_NOTE_BLOCK_PLING.record(),
+                Collections.singletonList(Toolkit.parsePotionEffect(XPotion.SPEED, 1, 10)),
+                Arrays.asList(
+                        "console: This command is run from the console, you can use %player%",
+                        "player: This command is run from the player, you can use %player%"
+                )
+        );
+    }
+
     private final String name;
-    private ItemStack activator;
+    private ItemPredicate activator;
     private Cooldown cooldown;
-    private String message;
-    private Sound sound;
-    private int soundPitch;
-    private int soundVolume;
+    private Message message;
+    private XSound.Record sound;
     private final List<PotionEffect> effects;
     private final List<String> commands;
 
-    public Ability(String name) {
+    public Ability(@NotNull String name) {
         this.name = name;
+        this.activator = ItemPredicate.empty();
+        this.cooldown = Cooldown.ZERO;
         this.effects = new ArrayList<>();
         this.commands = new ArrayList<>();
     }
 
-    public void setActivator(ItemStack activator) {
+    public Ability(@NotNull String name, @NotNull ItemPredicate activator, @Nullable Cooldown cooldown, @Nullable Message message, @Nullable XSound.Record sound, @NotNull List<PotionEffect> effects, @NotNull List<String> commands) {
+        this.name = name;
         this.activator = activator;
-    }
-
-    public void setCooldown(Cooldown cooldown) {
         this.cooldown = cooldown;
-    }
-
-    public void setMessage(String message) {
         this.message = message;
-    }
-
-    public void setSound(Sound sound, int pitch, int volume) {
         this.sound = sound;
-        this.soundPitch = pitch;
-        this.soundVolume = volume;
+        this.effects = effects;
+        this.commands = commands;
     }
 
-    public void addEffect(PotionEffectType type, int amplifierNonZeroBased, int durationSeconds) {
-        PotionEffect effect = new PotionEffect(type, Toolkit.parsePotionEffectDuration(durationSeconds), amplifierNonZeroBased - 1);
-        effects.add(effect);
-    }
+    @ApiStatus.Internal
+    public void deserialize(@NotNull ConfigurationSection section) {
+        // Activator
+        this.activator = ItemPredicate.valueOf(section.getConfigurationSection("Activator"))
+                .orElseThrow(() -> new IllegalArgumentException("Cannot find activator configuration on '" + name + "' ability"));
 
-    public void addCommand(String command) {
-        commands.add(command);
-    }
+        // Cooldown
+        this.cooldown = Cooldown.valueOf(section.get("Cooldown")).orElse(Cooldown.ZERO);
 
-    public void toResource(Resource resource) {
-        resource.set("Activator.Name", Toolkit.toNormalColorCodes(activator.getItemMeta().getDisplayName()));
-        resource.set("Activator.Material", activator.getType().toString());
-        if (cooldown != null) {
-            resource.set("Cooldown.Cooldown", cooldown.formatted(true));
+        // Message
+        if (section.isSet("Message")) {
+            final boolean enabled = section.getBoolean("Message.Enabled", false);
+            final String self = Toolkit.translate(section.getString("Message.Message"));
+            final String broadcast = Toolkit.translate(section.getString("Message.Broadcast"));
+            final int range = section.getInt("Message.Range", 5);
+
+            this.message = new Ability.Message(enabled, self, broadcast, range);
         }
-        resource.set("Message.Message", message);
-        resource.set("Sound.Sound", sound.toString());
-        resource.set("Sound.Pitch", soundPitch != 0 ? soundPitch : null);
-        resource.set("Sound.Volume", soundVolume != 0 ? soundVolume : null);
+
+        // Sound
+        if (section.isSet("Sound")) {
+            final String category = section.getString("Sound.Category", null);
+            final String soundName = section.getString("Sound.Sound");
+            final double pitch = section.getDouble("Sound.Pitch", 1.0d);
+            final double volume = section.getDouble("Sound.Volume", 1.0d);
+            final long seed = section.getLong("Sound.Seed", Long.MIN_VALUE);
+
+            this.sound = XSound.parse((category == null ? "" : category + "@") + soundName + ", " + pitch + ", " + volume + (seed == Long.MIN_VALUE ? "" : ", " + seed));
+        }
+
+        // Effects
+        if (section.isSet("Effects")) {
+            ConfigurationSection effectSection = section.getConfigurationSection("Effects");
+
+            for (String effectName : effectSection.getKeys(false)) {
+                XPotion potion = XPotion.of(effectName).get();
+                int amplifier = section.getInt("Effects." + effectName + ".Amplifier");
+                int duration = section.getInt("Effects." + effectName + ".Duration");
+
+                this.effects.add(Toolkit.parsePotionEffect(potion, amplifier, duration));
+            }
+        }
+
+        // Commands
+        if (section.isSet("Commands")) {
+            this.commands.addAll(section.getStringList("Commands"));
+        }
+    }
+
+    @ApiStatus.Internal
+    public void serialize(@NotNull ConfigurationSection section) {
+        section.set("Activator.Material", activator.material().name());
+        section.set("Activator.Name", Toolkit.toNormalColorCodes(activator.name()));
+        if (cooldown != Cooldown.ZERO) {
+            section.set("Cooldown.Cooldown", cooldown.formatted(true));
+        }
+        if (message != null) {
+            section.set("Message.Enabled", message.enabled());
+            section.set("Message.Message", message.self());
+            if (message.broadcast() != null) {
+                section.set("Message.Broadcast", message.broadcast());
+                section.set("Message.Range", message.range());
+            }
+        }
+        if (sound != null) {
+            if (sound.getCategory() != XSound.Category.MASTER) {
+                section.set("Sound.Category", sound.getCategory().name());
+            }
+            section.set("Sound.Sound", sound.std());
+            section.set("Sound.Pitch", sound.getPitch() != 1 ? sound.getPitch() : null);
+            section.set("Sound.Volume", sound.getVolume() != 1 ? sound.getVolume() : null);
+            if (sound.getSeed() != null) {
+                section.set("Sound.Seed", sound.getSeed());
+            }
+        }
 
         for (PotionEffect effect : effects) {
-            String type = effect.getType().getName();
+            String type = XPotion.of(effect.getType()).name();
             int amplifierNonZeroBased = effect.getAmplifier() + 1;
             int durationSeconds = effect.getDuration() / 20;
 
-            resource.set("Effects." + type + ".Amplifier", amplifierNonZeroBased);
-            resource.set("Effects." + type + ".Duration", durationSeconds);
+            section.set("Effects." + type + ".Amplifier", amplifierNonZeroBased);
+            section.set("Effects." + type + ".Duration", durationSeconds);
         }
 
-        resource.set("Commands", commands.toArray());
-
-        resource.save();
+        section.set("Commands", commands.toArray());
     }
 
-    public String getName() { return name; }
+    @NotNull
+    public String name() {
+        return name;
+    }
 
-    public ItemStack getActivator() { return activator; }
+    @NotNull
+    public ItemPredicate activator() {
+        return activator;
+    }
 
-    public Cooldown getCooldown() { return cooldown; }
+    @NotNull
+    public Cooldown cooldown() {
+        return cooldown;
+    }
 
-    public String getMessage() { return message; }
+    @Nullable
+    public Message message() {
+        return message;
+    }
 
-    public Sound getSound() { return sound; }
+    @Nullable
+    public XSound.Record sound() {
+        return sound;
+    }
 
-    public int getSoundPitch() { return soundPitch; }
+    @NotNull
+    public List<PotionEffect> effects() {
+        return Collections.unmodifiableList(effects);
+    }
 
-    public int getSoundVolume() { return soundVolume; }
+    @NotNull
+    public List<String> commands() {
+        return Collections.unmodifiableList(commands);
+    }
 
-    public List<PotionEffect> getEffects() { return effects; }
+    public void run(@NotNull PlayerInteractEvent event, @NotNull Player player) {
+        final PlayerAbilityEvent abilityEvent = new PlayerAbilityEvent(player, this, event);
+        Bukkit.getPluginManager().callEvent(abilityEvent);
+        if (abilityEvent.isCancelled()) {
+            return;
+        }
 
-    public List<String> getCommands() { return commands; }
+        event.setCancelled(true);
 
+        final Arena arena = Game.getInstance().getArena();
+        if (!arena.getUtilities().isCombatActionPermittedInRegion(player)) {
+            return;
+        }
+        final Resources resources = Game.getInstance().getResources();
+
+        String abilityPermission = "kp.ability." + this.name.toLowerCase();
+        if (!player.hasPermission(abilityPermission)) {
+            player.sendMessage(resources.getMessages().fetchString("Messages.General.Permission").replace("%permission%", abilityPermission));
+            return;
+        }
+
+        Cooldown cooldownRemaining = arena.getCooldowns().getRemainingCooldown(player, this);
+        if (cooldownRemaining.toSeconds() > 0) {
+            player.sendMessage(resources.getMessages().fetchString("Messages.Error.CooldownAbility").replace("%cooldown%", cooldownRemaining.formatted(false)));
+            return;
+        }
+
+        if (this.message != null) {
+            this.message.send(player);
+        }
+
+        if (this.sound != null) {
+            this.sound.soundPlayer().play(player.getLocation());
+        }
+
+        if (!this.effects.isEmpty()) {
+            this.effects.forEach(player::addPotionEffect);
+        }
+
+        if (!this.commands.isEmpty()) {
+            Toolkit.runCommands(player, this.commands, "none", "none");
+        }
+
+        if (this.cooldown == Cooldown.ZERO) {
+            ItemStack abilityItem = Toolkit.getHandItemForInteraction(event);
+            abilityItem.setAmount(abilityItem.getAmount() - 1);
+        } else {
+            arena.getCooldowns().setAbilityCooldown(player.getUniqueId(), this.name);
+        }
+    }
+
+    public static class Message {
+
+        private final boolean enabled;
+        private final String self;
+        private final String broadcast;
+        private final int range;
+
+        public Message(boolean enabled, @Nullable String self, @Nullable String broadcast, int range) {
+            this.enabled = enabled;
+            this.self = self;
+            this.broadcast = broadcast;
+            this.range = range;
+        }
+
+        public boolean enabled() {
+            return enabled;
+        }
+
+        @Nullable
+        public String self() {
+            return self;
+        }
+
+        @Nullable
+        public String broadcast() {
+            return broadcast;
+        }
+
+        public int range() {
+            return range;
+        }
+
+        public void send(@NotNull Player player) {
+            if (!this.enabled) {
+                return;
+            }
+
+            if (this.self != null) {
+                player.sendMessage(Toolkit.translate(player, this.self));
+            }
+
+            if (this.broadcast != null) {
+                final String msg = Toolkit.translate(player, this.broadcast);
+                if (this.range > 0) {
+                    for (Entity entity : player.getNearbyEntities(this.range, this.range, this.range)) {
+                        if (entity instanceof Player) {
+                            entity.sendMessage(msg);
+                        }
+                    }
+                } else {
+                    for (Entity entity : player.getWorld().getEntities()) {
+                        if (entity instanceof Player) {
+                            entity.sendMessage(msg);
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

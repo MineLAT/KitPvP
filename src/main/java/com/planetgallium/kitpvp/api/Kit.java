@@ -1,10 +1,9 @@
 package com.planetgallium.kitpvp.api;
 
 import com.planetgallium.kitpvp.item.AttributeWriter;
-import com.planetgallium.kitpvp.util.Cooldown;
+import com.planetgallium.kitpvp.api.util.Cooldown;
 import com.planetgallium.kitpvp.util.Resource;
 import com.planetgallium.kitpvp.util.Toolkit;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;

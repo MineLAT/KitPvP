@@ -2,7 +2,6 @@ package com.planetgallium.kitpvp.api;
 
 import com.planetgallium.kitpvp.Game;
 import com.planetgallium.kitpvp.util.Resources;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -11,7 +10,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 
 import com.planetgallium.kitpvp.game.Arena;
-import com.planetgallium.kitpvp.util.Toolkit;;
+import com.planetgallium.kitpvp.util.Toolkit;
 
 public class EventListener implements Listener {
 
@@ -39,8 +38,7 @@ public class EventListener implements Listener {
 					Ability abilityResult = arena.getAbilities().getAbilityByActivator(currentItem);
 
 					if (abilityResult != null) {
-						Bukkit.getPluginManager().callEvent(new PlayerAbilityEvent(p, abilityResult, e));
-						e.setCancelled(true);
+                        abilityResult.run(e, p);
 					}
 				}
 			}

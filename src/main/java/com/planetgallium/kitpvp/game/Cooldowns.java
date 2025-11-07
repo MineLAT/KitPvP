@@ -4,10 +4,9 @@ import com.planetgallium.kitpvp.Game;
 import com.planetgallium.kitpvp.api.Ability;
 import com.planetgallium.kitpvp.api.Kit;
 import com.planetgallium.kitpvp.util.CacheManager;
-import com.planetgallium.kitpvp.util.Cooldown;
+import com.planetgallium.kitpvp.api.util.Cooldown;
 import org.bukkit.entity.Player;
 
-import java.util.Map;
 import java.util.UUID;
 
 public class Cooldowns {
@@ -55,12 +54,12 @@ public class Cooldowns {
 		} else if (type instanceof Ability) {
 
 			Ability ability = (Ability) type;
-			if (ability.getCooldown() == null ||
-					!CacheManager.getPlayerAbilityCooldowns(p.getUniqueId()).containsKey(ability.getName()))
+			if (ability.cooldown() == Cooldown.ZERO ||
+					!CacheManager.getPlayerAbilityCooldowns(p.getUniqueId()).containsKey(ability.name()))
 				return noCooldown;
 
-			timeLastUsedSeconds = CacheManager.getPlayerAbilityCooldowns(p.getUniqueId()).get(ability.getName()).intValue();
-			actionCooldownSeconds = ability.getCooldown().toSeconds();
+			timeLastUsedSeconds = CacheManager.getPlayerAbilityCooldowns(p.getUniqueId()).get(ability.name()).intValue();
+			actionCooldownSeconds = ability.cooldown().toSeconds();
 
 		}
 

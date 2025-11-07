@@ -17,7 +17,6 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
-import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
@@ -28,7 +27,11 @@ import com.planetgallium.kitpvp.Game;
 import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.permissions.PermissionAttachmentInfo;
+import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class Toolkit {
 
@@ -265,8 +268,22 @@ public class Toolkit {
 		return defaultValue;
 	}
 
-	public static String translate(String s) {
-		return ChatColor.translateAlternateColorCodes('&', s.replace("%prefix%", Game.getPrefix()));
+    @NotNull
+    public static String translate(@NotNull Player player, @NotNull String s) {
+        s = s.replace("%player%", player.getName()).replace("%uuid%", player.getUniqueId().toString());
+        if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+            s = PlaceholderAPI.setPlaceholders(player, s);
+        }
+        return ChatColor.translateAlternateColorCodes('&', s.replace("%prefix%", Game.getPrefix() == null ? "" : Game.getPrefix()));
+    }
+
+    @Nullable
+    @Contract("!null -> !null")
+	public static String translate(@Nullable String s) {
+        if (s == null) {
+            return null;
+        }
+		return ChatColor.translateAlternateColorCodes('&', s.replace("%prefix%", Game.getPrefix() == null ? "" : Game.getPrefix()));
 	}
 
 	public static int getNextAvailable(FileConfiguration yamlConfig, String path, int limit, boolean zeroBased,
@@ -531,6 +548,11 @@ public class Toolkit {
 		}
 
 	}
+
+    @NotNull
+    public static PotionEffect parsePotionEffect(@NotNull XPotion type, int amplifierNonZeroBased, int durationSeconds) {
+        return new PotionEffect(type.getPotionEffectType(), Toolkit.parsePotionEffectDuration(durationSeconds), amplifierNonZeroBased - 1);
+    }
 
 	public static int parsePotionEffectDuration(int duration) {
 		int durationInTicks = duration * 20;

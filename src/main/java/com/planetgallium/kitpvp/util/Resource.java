@@ -10,6 +10,9 @@ import org.bukkit.ChatColor;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class Resource extends YamlConfiguration {
 
@@ -90,24 +93,26 @@ public class Resource extends YamlConfiguration {
 		}
 	}
 
-	@Override
-	public String getString(String path) {
-		Toolkit.printToConsole("%prefix% &cNote: Do not use legacy resource.getString, use resource.fetchString instead");
-		return super.getString(path);
-	}
-
     public String fetchString(String path) {
-		String string = super.getString(path);
+        String string = fetchString(path, null);
+        if (string == null) {
+            string = "String not found";
+            Toolkit.printToConsole(String.format("&7[&b&lKIT-PVP&7] &cString with path %s was not found.", path));
+        }
+        return string;
+    }
+
+    @Nullable
+    @Contract("_, !null -> !null")
+    public String fetchString(@NotNull String path, @Nullable String def) {
+		final String string = super.getString(path);
 
 		if (string != null) {
-			string = ChatColor.translateAlternateColorCodes('&',
+			return ChatColor.translateAlternateColorCodes('&',
 					string.replace("%prefix%", Game.getPrefix() == null ? "" : Game.getPrefix()));
 		} else {
-			string = "String not found";
-			Toolkit.printToConsole(String.format("&7[&b&lKIT-PVP&7] &cString with path %s was not found.", path));
+			return def;
 		}
-
-		return string;
 	}
 
     @Override
