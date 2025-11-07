@@ -4,6 +4,7 @@
 
 Abilities:
   Archer:
+    Enabled: true
     Item:
       Fire: '&aFire Arrows &eON &7(Right Click)'
       NoFire: '&aFire Arrows &cOFF &7(Right Click)'
@@ -17,6 +18,7 @@ Abilities:
       Pitch: 1
       Enabled: true
   Soldier:
+    Enabled: true
     Item:
       Name: '&aGun &7(Right Click)'
       Amount: 5
@@ -25,6 +27,7 @@ Abilities:
       Pitch: 1
       Enabled: true
   Bomber:
+    Enabled: true
     Item:
       Name: '&aTNT Trail &7(Right Click)'
       Amount: 3
@@ -36,6 +39,7 @@ Abilities:
       Pitch: 1
       Enabled: true
   Kangaroo:
+    Enabled: true
     Item:
       Name: '&aLauncher &7(Right Click)'
       Amount: 3
@@ -47,6 +51,7 @@ Abilities:
       Pitch: 1
       Enabled: true  
   Warper:
+    Enabled: true
     Item:
       Name: '&aNearest Player Teleporter &7(Right Click)'
       Amount: 3
@@ -58,6 +63,7 @@ Abilities:
       Pitch: 1
       Enabled: true
   Witch:
+    Enabled: true
     Item:
       Name: '&aPotion Switcher &7(Right Click)'
     Message:
@@ -68,6 +74,7 @@ Abilities:
       Pitch: 1
       Enabled: true
   Ninja:
+    Enabled: true
     Item:
       Name: '&aVanish Stars &7(Right Click)'
       Amount: 3
@@ -79,6 +86,7 @@ Abilities:
       Pitch: 1
       Enabled: true
   Thunderbolt:
+    Enabled: true
     Item:
       Name: '&aLightning Strike &7(Click Player)'
       Amount: 3
@@ -90,6 +98,7 @@ Abilities:
       Pitch: 1
       Enabled: true
   Vampire:
+    Enabled: true
     Item:
       Name: '&aBlood Suckers &7(Click Player)'
       Amount: 3
@@ -101,6 +110,7 @@ Abilities:
       Pitch: 1
       Enabled: true
   Trickster:
+    Enabled: true
     Item:
       Name: '&aSwitcher Pellets &7(Right Click)'
       Amount: 4

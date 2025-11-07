@@ -73,7 +73,7 @@ public class ItemListener implements Listener {
         resources.getAbilities().listen(abilities -> {
             for (ItemAbility ability : this.itemAbilities.values()) {
                 ConfigurationSection section = abilities.getConfigurationSection("Abilities." + ability.name());
-                if (section == null) {
+                if (section == null || !section.getBoolean("Enabled", true)) {
                     section = Resource.empty();
                 }
 
