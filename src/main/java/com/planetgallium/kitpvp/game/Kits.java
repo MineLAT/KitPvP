@@ -144,7 +144,7 @@ public class Kits {
 
         kit.setPermission(resource.fetchString("Kit.Permission"));
         kit.setLevel(resource.getInt("Kit.Level"));
-        kit.setCooldown(new Cooldown(resource.fetchString("Kit.Cooldown")));
+        kit.setCooldown(Cooldown.valueOf(resource.fetchString("Kit.Cooldown")));
 
         kit.setMaxHealth(resource.contains("Kit.Health") ? resource.getInt("Kit.Health") : 20);
 
@@ -200,7 +200,7 @@ public class Kits {
         }
 
         Cooldown cooldownRemaining = arena.getCooldowns().getRemainingCooldown(p, kit);
-        if (!p.hasPermission("kp.cooldownbypass") && cooldownRemaining.toSeconds() > 0) {
+        if (!p.hasPermission("kp.cooldownbypass") && cooldownRemaining.toMillis() > 0) {
             p.sendMessage(messages.fetchString("Messages.Error.CooldownKit")
                     .replace("%cooldown%", cooldownRemaining.as(Cooldown.READABLE_FORMAT)));
             return;
@@ -225,7 +225,7 @@ public class Kits {
         setPlayerKit(p.getUniqueId(), kit.getName());
 
         Cooldown kitCooldown = kit.getCooldown();
-        if (kitCooldown != null && kitCooldown.toSeconds() > 0 && !p.hasPermission("kp.cooldownbypass")) {
+        if (kitCooldown != null && kitCooldown.toMillis() > 0 && !p.hasPermission("kp.cooldownbypass")) {
             arena.getCooldowns().setKitCooldown(p.getUniqueId(), kit.getName());
         }
 

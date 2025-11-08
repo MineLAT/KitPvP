@@ -65,9 +65,9 @@ public class ChronoFormat {
 
         for (ChronoUnit unit : this.units) {
             final long unitLength = getLength(unit.getDuration());
-            final long amount = length / unitLength;
+            final double amount = (double) length / unitLength;
             if (amount > 0) {
-                length -= unitLength * amount;
+                length -= unitLength * (long) amount;
                 joiner.add(format(amount, unit));
                 count++;
             }
@@ -77,6 +77,11 @@ public class ChronoFormat {
         }
 
         return joiner.toString();
+    }
+
+    @NotNull
+    public String format(double amount, @NotNull ChronoUnit unit) {
+        return format((long) amount, unit);
     }
 
     @NotNull

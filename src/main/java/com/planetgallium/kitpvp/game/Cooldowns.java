@@ -20,7 +20,7 @@ public class Cooldowns {
 	}
 
 	public void setAbilityCooldown(UUID uniqueId, String abilityName) {
-		CacheManager.getPlayerAbilityCooldowns(uniqueId).put(abilityName, (System.currentTimeMillis() / 1000));
+		CacheManager.getPlayerAbilityCooldowns(uniqueId).put(abilityName, System.currentTimeMillis());
 	}
 
 	public void clearPlayerAbilityCooldowns(UUID uniqueId) {
@@ -28,14 +28,13 @@ public class Cooldowns {
 	}
 
 	public void setKitCooldown(UUID uniqueId, String kitName) {
-		long timeKitLastUsed = System.currentTimeMillis() / 1000;
-		stats.getOrCreateStatsCache(uniqueId).addKitCooldown(kitName, timeKitLastUsed);
+		stats.getOrCreateStatsCache(uniqueId).addKitCooldown(kitName, System.currentTimeMillis());
 	}
 
 	public Cooldown getRemainingCooldown(Player p, Object type) {
-		long currentTimeSeconds = (System.currentTimeMillis() / 1000);
-		int timeLastUsedSeconds = 0;
-		long actionCooldownSeconds = 0;
+		long currentTimeMillis = System.currentTimeMillis();
+		long timeLastUsedMillis = 0;
+		long actionCooldownMillis = 0;
 
 		if (type instanceof Kit) {
 
@@ -44,11 +43,16 @@ public class Cooldowns {
 
 			Object timeLastUsedResult = database.getData(kit.getName() + "_cooldowns", "last_used", p.getUniqueId());
 			if (timeLastUsedResult != null) {
-				timeLastUsedSeconds = (int) timeLastUsedResult;
+				timeLastUsedMillis = (int) timeLastUsedResult;
+                // Convert to millis
+                if (timeLastUsedMillis < 100000000000L) {
+                    timeLastUsedMillis = timeLastUsedMillis * 1000L;
+                }
 			} else {
 				return Cooldown.ZERO;
 			}
-			actionCooldownSeconds = kit.getCooldown().toSeconds();
+
+			actionCooldownMillis = kit.getCooldown().toMillis();
 
 		} else if (type instanceof Ability) {
 
@@ -57,13 +61,13 @@ public class Cooldowns {
 					!CacheManager.getPlayerAbilityCooldowns(p.getUniqueId()).containsKey(ability.name()))
 				return Cooldown.ZERO;
 
-			timeLastUsedSeconds = CacheManager.getPlayerAbilityCooldowns(p.getUniqueId()).get(ability.name()).intValue();
-			actionCooldownSeconds = ability.cooldown().toSeconds();
+			timeLastUsedMillis = CacheManager.getPlayerAbilityCooldowns(p.getUniqueId()).get(ability.name());
+			actionCooldownMillis = ability.cooldown().toMillis();
 
 		}
 
-		int cooldownRemainingSeconds = (int) (timeLastUsedSeconds + actionCooldownSeconds - currentTimeSeconds);
-		return new Cooldown(cooldownRemainingSeconds);
+		long cooldownRemainingMillis = (timeLastUsedMillis + actionCooldownMillis - currentTimeMillis);
+		return Cooldown.valueOf(cooldownRemainingMillis);
 	}
 	
 }

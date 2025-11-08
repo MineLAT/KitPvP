@@ -5,6 +5,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.text.DecimalFormat;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
@@ -14,7 +15,9 @@ import java.util.concurrent.TimeUnit;
 
 public class Cooldown {
 
-    public static final Cooldown ZERO = new Cooldown(Duration.ofMillis(0));
+    public static final Cooldown ZERO = new Cooldown(0L);
+
+    private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("0.#");
     public static final ChronoFormat READABLE_FORMAT = new ChronoFormat(Arrays.asList(
             ChronoUnit.DAYS,
             ChronoUnit.HOURS,
@@ -22,10 +25,19 @@ public class Cooldown {
             ChronoUnit.SECONDS
     ), " ", Integer.MAX_VALUE) {
         @Override
-        public @NotNull String format(long amount, @NotNull ChronoUnit unit) {
-            final boolean singular = amount == 1 || amount == -1;
+        public @NotNull String format(double amount, @NotNull ChronoUnit unit) {
+            final String formatted;
+            final boolean singular;
+            if (unit == ChronoUnit.SECONDS) {
+                formatted = DECIMAL_FORMAT.format(amount);
+                singular = amount == 1 || amount == -1;
+            } else {
+                final long num = (long) amount;
+                formatted = String.valueOf(num);
+                singular = num == 1 || num == -1;
+            }
             final String path = "duration.unit." + unit.name().toLowerCase() + "." + (singular ? "singular" : "plural");
-            return amount + " " + Game.getInstance().getResources().getMessages().getString(path, singular ? ChronoResource.SINGULAR.get(unit) : ChronoResource.PLURAL.get(unit));
+            return formatted + " " + Game.getInstance().getResources().getMessages().getString(path, singular ? ChronoResource.SINGULAR.get(unit) : ChronoResource.PLURAL.get(unit));
         }
     };
     public static final ChronoFormat CONFIG_FORMAT = new ChronoFormat(Arrays.asList(
@@ -34,14 +46,19 @@ public class Cooldown {
             ChronoUnit.MINUTES,
             ChronoUnit.SECONDS,
             ChronoUnit.MILLIS
-    ), " and ", Integer.MAX_VALUE);
+    ), " and ", Integer.MAX_VALUE) {
+        @Override
+        public long getLength(@NotNull Duration duration) {
+            return duration.toMillis();
+        }
+    };
 
     @NotNull
     public static Optional<Cooldown> valueOf(@Nullable Object object) {
         if (object instanceof ConfigurationSection) {
             final ConfigurationSection section = (ConfigurationSection) object;
             if (section.isSet("Cooldown")) {
-                return valueOf(section.getString("Cooldown"));
+                return valueOf((Object) section.getString("Cooldown"));
             }
             final StringJoiner joiner = new StringJoiner(" AND ");
             for (String unit : section.getKeys(false)) {
@@ -50,33 +67,48 @@ public class Cooldown {
                     joiner.add(amount + " " + unit);
                 }
             }
-            return valueOf(joiner.toString());
+            return valueOf((Object) joiner.toString());
         } else if (object instanceof String) {
             final String s = (String) object;
             if (s.trim().isEmpty()) {
                 return Optional.empty();
             }
-            if (s.trim().equals("0")) {
-                return Optional.of(ZERO);
-            }
-            return Optional.of(new Cooldown(s));
+            return Optional.of(valueOf(s));
         } else if (object instanceof Number) {
-            return Optional.of(new Cooldown(Duration.ofMillis(((Number) object).longValue())));
+            return Optional.of(valueOf(((Number) object).longValue()));
         }
         return Optional.empty();
     }
 
-    private final Duration duration;
-
-    public Cooldown(@NotNull Duration duration) {
-        this.duration = duration;
+    @NotNull
+    public static Cooldown valueOf(@NotNull String s) {
+        s = s.trim();
+        if (s.isEmpty() || s.equals("0")) {
+            return ZERO;
+        }
+        return new Cooldown(s);
     }
-	
-	public Cooldown(int seconds) {
-		this.duration = Duration.ofSeconds(seconds);
-	}
 
-	public Cooldown(@NotNull String s) {
+    @NotNull
+    public static Cooldown valueOf(long millis) {
+        if (millis < 1) {
+            return ZERO;
+        }
+        return new Cooldown(millis);
+    }
+
+    @NotNull
+    public static Cooldown valueOf(@NotNull Duration duration) {
+        return new Cooldown(duration.toMillis());
+    }
+
+    private final long millis;
+
+    Cooldown(long millis) {
+        this.millis = millis;
+    }
+
+    Cooldown(@NotNull String s) {
         // Old format compatibility
         if (s.contains(":")) {
             long millis = 0;
@@ -101,18 +133,18 @@ public class Cooldown {
                 }
             }
 
-            this.duration = Duration.ofMillis(millis);
+            this.millis = millis;
         } else {
-            this.duration = ChronoFormat.parse(s);
+            this.millis = ChronoFormat.parse(s).toMillis();
         }
 	}
 
     @NotNull
     public String as(@NotNull ChronoFormat format) {
-        return format.format(duration);
+        return format.format(Duration.ofMillis(millis));
     }
 
-	public long toSeconds() {
-		return duration.getSeconds();
+	public long toMillis() {
+		return millis;
 	}
 }
