@@ -35,19 +35,18 @@ public class Cooldowns {
 	public Cooldown getRemainingCooldown(Player p, Object type) {
 		long currentTimeSeconds = (System.currentTimeMillis() / 1000);
 		int timeLastUsedSeconds = 0;
-		int actionCooldownSeconds = 0;
-		Cooldown noCooldown = new Cooldown(0, 0, 0, 0);
+		long actionCooldownSeconds = 0;
 
 		if (type instanceof Kit) {
 
 			Kit kit = (Kit) type;
-			if (kit.getCooldown() == null) return noCooldown;
+			if (kit.getCooldown() == null) return Cooldown.ZERO;
 
 			Object timeLastUsedResult = database.getData(kit.getName() + "_cooldowns", "last_used", p.getUniqueId());
 			if (timeLastUsedResult != null) {
 				timeLastUsedSeconds = (int) timeLastUsedResult;
 			} else {
-				return noCooldown;
+				return Cooldown.ZERO;
 			}
 			actionCooldownSeconds = kit.getCooldown().toSeconds();
 
@@ -56,7 +55,7 @@ public class Cooldowns {
 			Ability ability = (Ability) type;
 			if (ability.cooldown() == Cooldown.ZERO ||
 					!CacheManager.getPlayerAbilityCooldowns(p.getUniqueId()).containsKey(ability.name()))
-				return noCooldown;
+				return Cooldown.ZERO;
 
 			timeLastUsedSeconds = CacheManager.getPlayerAbilityCooldowns(p.getUniqueId()).get(ability.name()).intValue();
 			actionCooldownSeconds = ability.cooldown().toSeconds();

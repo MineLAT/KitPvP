@@ -140,7 +140,7 @@ public class Ability {
         section.set("Activator.Material", activator.material().name());
         section.set("Activator.Name", Toolkit.toNormalColorCodes(activator.name()));
         if (cooldown != Cooldown.ZERO) {
-            section.set("Cooldown.Cooldown", cooldown.formatted(true));
+            section.set("Cooldown.Cooldown", cooldown.as(Cooldown.CONFIG_FORMAT));
         }
         if (message != null) {
             section.set("Message.Enabled", message.enabled());
@@ -270,7 +270,7 @@ public class Ability {
 
         Cooldown cooldownRemaining = arena.getCooldowns().getRemainingCooldown(player, this);
         if (cooldownRemaining.toSeconds() > 0) {
-            player.sendMessage(resources.getMessages().fetchString("Messages.Error.CooldownAbility").replace("%cooldown%", cooldownRemaining.formatted(false)));
+            player.sendMessage(resources.getMessages().fetchString("Messages.Error.CooldownAbility").replace("%cooldown%", cooldownRemaining.as(Cooldown.READABLE_FORMAT)));
             return;
         }
 

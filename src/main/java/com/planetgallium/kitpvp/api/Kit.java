@@ -195,7 +195,7 @@ public class Kit {
 
     public void toResource(Resource resource) {
         resource.set("Kit.Permission", permission != null ? permission : "kp.kit." + name);
-        resource.set("Kit.Cooldown", cooldown != null ? cooldown.formatted(true) : 0);
+        resource.set("Kit.Cooldown", cooldown != null ? cooldown.as(Cooldown.CONFIG_FORMAT) : 0);
         resource.set("Kit.Level", level);
         resource.set("Kit.Health", maxHealth);
         resource.save();

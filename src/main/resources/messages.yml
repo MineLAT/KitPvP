@@ -62,3 +62,21 @@ Messages:
     - ' &aDeaths: &7%deaths%'
     - ' '
     - '&7&m                                &r'
+
+duration:
+  unit:
+    days:
+      plural: 'days'
+      singular: 'day'
+    hours:
+      plural: 'hours'
+      singular: 'hour'
+    minutes:
+      plural: 'minutes'
+      singular: 'minute'
+    seconds:
+      plural: 'seconds'
+      singular: 'second'
+    millis:
+      plural: 'milliseconds'
+      singular: 'millisecond'

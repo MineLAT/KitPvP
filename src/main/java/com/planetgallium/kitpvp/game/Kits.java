@@ -202,7 +202,7 @@ public class Kits {
         Cooldown cooldownRemaining = arena.getCooldowns().getRemainingCooldown(p, kit);
         if (!p.hasPermission("kp.cooldownbypass") && cooldownRemaining.toSeconds() > 0) {
             p.sendMessage(messages.fetchString("Messages.Error.CooldownKit")
-                    .replace("%cooldown%", cooldownRemaining.formatted(false)));
+                    .replace("%cooldown%", cooldownRemaining.as(Cooldown.READABLE_FORMAT)));
             return;
         }
 

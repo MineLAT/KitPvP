@@ -106,7 +106,7 @@ public class ItemListener implements Listener {
 
             Cooldown cooldownRemaining = arena.getCooldowns().getRemainingCooldown(player, ability);
             if (cooldownRemaining.toSeconds() > 0) {
-                player.sendMessage(resources.getMessages().fetchString("Messages.Error.CooldownAbility").replace("%cooldown%", cooldownRemaining.formatted(false)));
+                player.sendMessage(resources.getMessages().fetchString("Messages.Error.CooldownAbility").replace("%cooldown%", cooldownRemaining.as(Cooldown.READABLE_FORMAT)));
                 return;
             }
 
