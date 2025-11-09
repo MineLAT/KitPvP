@@ -91,29 +91,7 @@ public class Timespan {
         if (s.isEmpty() || s.equals("0")) {
             return ZERO;
         }
-        return new Timespan(s);
-    }
 
-    @NotNull
-    public static Timespan valueOf(long millis) {
-        if (millis < 1) {
-            return ZERO;
-        }
-        return new Timespan(millis);
-    }
-
-    @NotNull
-    public static Timespan valueOf(@NotNull Duration duration) {
-        return new Timespan(duration.toMillis());
-    }
-
-    private final long millis;
-
-    Timespan(long millis) {
-        this.millis = millis;
-    }
-
-    Timespan(@NotNull String s) {
         // Old format compatibility
         if (s.contains(":")) {
             long millis = 0;
@@ -138,11 +116,32 @@ public class Timespan {
                 }
             }
 
-            this.millis = millis;
-        } else {
-            this.millis = ChronoFormat.parse(s).toMillis();
+            return valueOf(millis);
         }
-	}
+
+        return valueOf(ChronoFormat.parse(s));
+    }
+
+    @NotNull
+    public static Timespan valueOf(@NotNull Duration duration) {
+        return valueOf(duration.toMillis());
+    }
+
+    @NotNull
+    public static Timespan valueOf(long millis) {
+        if (millis < 1) {
+            return ZERO;
+        }
+        return new Timespan(millis);
+    }
+
+    private final long millis;
+    private final long ticks;
+
+    Timespan(long millis) {
+        this.millis = millis;
+        this.ticks = (long) (millis * 0.02);
+    }
 
     @NotNull
     public String as(@NotNull ChronoFormat format) {
@@ -154,6 +153,6 @@ public class Timespan {
 	}
 
     public long toTicks() {
-        return (long) (millis * 0.02);
+        return ticks;
     }
 }
