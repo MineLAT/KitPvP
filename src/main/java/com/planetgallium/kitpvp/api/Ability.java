@@ -5,7 +5,7 @@ import com.cryptomorin.xseries.XPotion;
 import com.cryptomorin.xseries.XSound;
 import com.planetgallium.kitpvp.Game;
 import com.planetgallium.kitpvp.api.util.ItemPredicate;
-import com.planetgallium.kitpvp.api.util.Cooldown;
+import com.planetgallium.kitpvp.api.util.Timespan;
 import com.planetgallium.kitpvp.util.Toolkit;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
@@ -43,7 +43,7 @@ public class Ability {
         return new Ability(
                 prefix + "-Blank",
                 new ItemPredicate(XMaterial.EMERALD),
-                Cooldown.ZERO,
+                Timespan.ZERO,
                 new Message(true, "%prefix% &7You have used your ability.", null, 0),
                 XSound.BLOCK_NOTE_BLOCK_PLING.record(),
                 Collections.singletonList(Toolkit.parsePotionEffect(XPotion.SPEED, 1, 10)),
@@ -56,7 +56,7 @@ public class Ability {
 
     private final String name;
     protected ItemPredicate activator;
-    protected Cooldown cooldown;
+    protected Timespan cooldown;
     protected Message message;
     protected XSound.Record sound;
     protected final List<PotionEffect> effects;
@@ -67,12 +67,12 @@ public class Ability {
     public Ability(@NotNull String name) {
         this.name = name;
         this.activator = ItemPredicate.empty();
-        this.cooldown = Cooldown.ZERO;
+        this.cooldown = Timespan.ZERO;
         this.effects = new ArrayList<>();
         this.commands = new ArrayList<>();
     }
 
-    public Ability(@NotNull String name, @NotNull ItemPredicate activator, @Nullable Cooldown cooldown, @Nullable Message message, @Nullable XSound.Record sound, @NotNull List<PotionEffect> effects, @NotNull List<String> commands) {
+    public Ability(@NotNull String name, @NotNull ItemPredicate activator, @Nullable Timespan cooldown, @Nullable Message message, @Nullable XSound.Record sound, @NotNull List<PotionEffect> effects, @NotNull List<String> commands) {
         this.name = name;
         this.activator = activator;
         this.cooldown = cooldown;
@@ -93,9 +93,9 @@ public class Ability {
 
         // Cooldown
         if (section.isSet("Cooldown")) {
-            this.cooldown = Cooldown.valueOf(section.get("Cooldown")).orElse(Cooldown.ZERO);
+            this.cooldown = Timespan.valueOf(section.get("Cooldown")).orElse(Timespan.ZERO);
         } else {
-            this.cooldown = Cooldown.ZERO;
+            this.cooldown = Timespan.ZERO;
         }
 
         // Message
@@ -150,8 +150,8 @@ public class Ability {
     public void serialize(@NotNull ConfigurationSection section) {
         section.set("Activator.Material", activator.material().name());
         section.set("Activator.Name", Toolkit.toNormalColorCodes(activator.name()));
-        if (cooldown != Cooldown.ZERO) {
-            section.set("Cooldown.Cooldown", cooldown.as(Cooldown.CONFIG_FORMAT));
+        if (cooldown != Timespan.ZERO) {
+            section.set("Cooldown.Cooldown", cooldown.as(Timespan.CONFIG_FORMAT));
         }
         if (message != null) {
             section.set("Message.Enabled", message.enabled());
@@ -196,7 +196,7 @@ public class Ability {
     }
 
     @NotNull
-    public Cooldown cooldown() {
+    public Timespan cooldown() {
         return cooldown;
     }
 
@@ -253,14 +253,14 @@ public class Ability {
     }
 
     public boolean isReady(@NotNull Player player, boolean message) {
-        if (this.cooldown == Cooldown.ZERO) {
+        if (this.cooldown == Timespan.ZERO) {
             return true;
         }
 
-        final Cooldown cooldownRemaining = Game.getInstance().getArena().getCooldowns().getRemainingCooldown(player, this);
+        final Timespan cooldownRemaining = Game.getInstance().getArena().getCooldowns().getRemainingCooldown(player, this);
         if (cooldownRemaining.toMillis() > 0) {
             if (message) {
-                player.sendMessage(Game.getInstance().getResources().getMessages().fetchString("Messages.Error.CooldownAbility").replace("%cooldown%", cooldownRemaining.as(Cooldown.READABLE_FORMAT)));
+                player.sendMessage(Game.getInstance().getResources().getMessages().fetchString("Messages.Error.CooldownAbility").replace("%cooldown%", cooldownRemaining.as(Timespan.READABLE_FORMAT)));
             }
             return false;
         }
@@ -314,7 +314,7 @@ public class Ability {
         if (isAllowed(player, true) && isReady(player, true)) {
             run(player);
 
-            if (this.cooldown == Cooldown.ZERO) {
+            if (this.cooldown == Timespan.ZERO) {
                 item.setAmount(item.getAmount() - 1);
             } else {
                 cooldown(player);
@@ -339,7 +339,7 @@ public class Ability {
     }
 
     protected void cooldown(@NotNull Player player) {
-        if (this.cooldown != Cooldown.ZERO) {
+        if (this.cooldown != Timespan.ZERO) {
             Game.getInstance().getArena().getCooldowns().setAbilityCooldown(player.getUniqueId(), this);
         }
     }

@@ -13,9 +13,9 @@ import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.concurrent.TimeUnit;
 
-public class Cooldown {
+public class Timespan {
 
-    public static final Cooldown ZERO = new Cooldown(0L);
+    public static final Timespan ZERO = new Timespan(0L);
 
     private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("0.#");
     public static final ChronoFormat READABLE_FORMAT = new ChronoFormat(Arrays.asList(
@@ -54,12 +54,15 @@ public class Cooldown {
     };
 
     @NotNull
-    public static Optional<Cooldown> valueOf(@Nullable Object object) {
+    public static Optional<Timespan> valueOf(@Nullable Object object) {
         if (object instanceof ConfigurationSection) {
             final ConfigurationSection section = (ConfigurationSection) object;
+
+            // Old format compatibility
             if (section.isSet("Cooldown")) {
                 return valueOf((Object) section.getString("Cooldown"));
             }
+
             final StringJoiner joiner = new StringJoiner(" AND ");
             for (String unit : section.getKeys(false)) {
                 final long amount = section.getLong(unit);
@@ -67,12 +70,14 @@ public class Cooldown {
                     joiner.add(amount + " " + unit);
                 }
             }
+
             return valueOf((Object) joiner.toString());
         } else if (object instanceof String) {
             final String s = (String) object;
             if (s.trim().isEmpty()) {
                 return Optional.empty();
             }
+
             return Optional.of(valueOf(s));
         } else if (object instanceof Number) {
             return Optional.of(valueOf(((Number) object).longValue()));
@@ -81,34 +86,34 @@ public class Cooldown {
     }
 
     @NotNull
-    public static Cooldown valueOf(@NotNull String s) {
+    public static Timespan valueOf(@NotNull String s) {
         s = s.trim();
         if (s.isEmpty() || s.equals("0")) {
             return ZERO;
         }
-        return new Cooldown(s);
+        return new Timespan(s);
     }
 
     @NotNull
-    public static Cooldown valueOf(long millis) {
+    public static Timespan valueOf(long millis) {
         if (millis < 1) {
             return ZERO;
         }
-        return new Cooldown(millis);
+        return new Timespan(millis);
     }
 
     @NotNull
-    public static Cooldown valueOf(@NotNull Duration duration) {
-        return new Cooldown(duration.toMillis());
+    public static Timespan valueOf(@NotNull Duration duration) {
+        return new Timespan(duration.toMillis());
     }
 
     private final long millis;
 
-    Cooldown(long millis) {
+    Timespan(long millis) {
         this.millis = millis;
     }
 
-    Cooldown(@NotNull String s) {
+    Timespan(@NotNull String s) {
         // Old format compatibility
         if (s.contains(":")) {
             long millis = 0;
@@ -147,4 +152,8 @@ public class Cooldown {
 	public long toMillis() {
 		return millis;
 	}
+
+    public long toTicks() {
+        return (long) (millis * 0.02);
+    }
 }

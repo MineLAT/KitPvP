@@ -1,7 +1,7 @@
 package com.planetgallium.kitpvp.api;
 
 import com.planetgallium.kitpvp.item.AttributeWriter;
-import com.planetgallium.kitpvp.api.util.Cooldown;
+import com.planetgallium.kitpvp.api.util.Timespan;
 import com.planetgallium.kitpvp.util.Resource;
 import com.planetgallium.kitpvp.util.Toolkit;
 import org.bukkit.entity.Player;
@@ -18,7 +18,7 @@ public class Kit {
 
     private final String name;
     private String permission;
-    private Cooldown cooldown;
+    private Timespan cooldown;
     private int level;
     private int maxHealth;
 
@@ -44,7 +44,7 @@ public class Kit {
         this.permission = permission;
     }
 
-    public void setCooldown(Cooldown cooldown) {
+    public void setCooldown(Timespan cooldown) {
         this.cooldown = cooldown;
     }
 
@@ -195,7 +195,7 @@ public class Kit {
 
     public void toResource(Resource resource) {
         resource.set("Kit.Permission", permission != null ? permission : "kp.kit." + name);
-        resource.set("Kit.Cooldown", cooldown != null ? cooldown.as(Cooldown.CONFIG_FORMAT) : 0);
+        resource.set("Kit.Cooldown", cooldown != null ? cooldown.as(Timespan.CONFIG_FORMAT) : 0);
         resource.set("Kit.Level", level);
         resource.set("Kit.Health", maxHealth);
         resource.save();
@@ -223,7 +223,7 @@ public class Kit {
 
     public String getPermission() { return permission; }
 
-    public Cooldown getCooldown() { return cooldown; }
+    public Timespan getCooldown() { return cooldown; }
 
     public int getLevel() { return level; }
 

@@ -4,7 +4,7 @@ import com.planetgallium.kitpvp.Game;
 import com.planetgallium.kitpvp.api.Ability;
 import com.planetgallium.kitpvp.api.Kit;
 import com.planetgallium.kitpvp.api.PlayerSelectKitEvent;
-import com.planetgallium.kitpvp.api.util.Cooldown;
+import com.planetgallium.kitpvp.api.util.Timespan;
 import com.planetgallium.kitpvp.item.AttributeParser;
 import com.planetgallium.kitpvp.util.*;
 import org.bukkit.Bukkit;
@@ -144,7 +144,7 @@ public class Kits {
 
         kit.setPermission(resource.fetchString("Kit.Permission"));
         kit.setLevel(resource.getInt("Kit.Level"));
-        kit.setCooldown(Cooldown.valueOf(resource.fetchString("Kit.Cooldown")));
+        kit.setCooldown(Timespan.valueOf(resource.fetchString("Kit.Cooldown")));
 
         kit.setMaxHealth(resource.contains("Kit.Health") ? resource.getInt("Kit.Health") : 20);
 
@@ -199,10 +199,10 @@ public class Kits {
             return;
         }
 
-        Cooldown cooldownRemaining = arena.getCooldowns().getRemainingCooldown(p, kit);
+        Timespan cooldownRemaining = arena.getCooldowns().getRemainingCooldown(p, kit);
         if (!p.hasPermission("kp.cooldownbypass") && cooldownRemaining.toMillis() > 0) {
             p.sendMessage(messages.fetchString("Messages.Error.CooldownKit")
-                    .replace("%cooldown%", cooldownRemaining.as(Cooldown.READABLE_FORMAT)));
+                    .replace("%cooldown%", cooldownRemaining.as(Timespan.READABLE_FORMAT)));
             return;
         }
 
@@ -224,7 +224,7 @@ public class Kits {
         Bukkit.getPluginManager().callEvent(new PlayerSelectKitEvent(player, kit));
         setPlayerKit(p.getUniqueId(), kit.getName());
 
-        Cooldown kitCooldown = kit.getCooldown();
+        Timespan kitCooldown = kit.getCooldown();
         if (kitCooldown != null && kitCooldown.toMillis() > 0 && !p.hasPermission("kp.cooldownbypass")) {
             arena.getCooldowns().setKitCooldown(p.getUniqueId(), kit.getName());
         }
