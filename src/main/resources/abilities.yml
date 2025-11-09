@@ -6,6 +6,7 @@ Abilities:
   Archer:
     Enabled: true
     Cooldown: 0
+    fire-duration: 50 SECONDS
     Item:
       Name: '&aArcher''s Bow'
       Fire: '&aFire Arrows &eON &7(Right Click)'
@@ -22,6 +23,8 @@ Abilities:
   Soldier:
     Enabled: true
     Cooldown: 0
+    velocity: 2.5
+    damage: 4.5
     Item:
       Material: IRON_HOE
       Name: '&aGun &7(Right Click)'
@@ -33,6 +36,7 @@ Abilities:
   Bomber:
     Enabled: true
     Cooldown: 0
+    amount: 5
     Item:
       Material: COAL
       Name: '&aTNT Trail &7(Right Click)'
@@ -47,6 +51,7 @@ Abilities:
   Kangaroo:
     Enabled: true
     Cooldown: 0
+    power: 2
     Item:
       Material: SADDLE
       Name: '&aLauncher &7(Right Click)'
@@ -88,6 +93,7 @@ Abilities:
   Ninja:
     Enabled: true
     Cooldown: 0
+    duration: 5 SECONDS
     Item:
       Material: NETHER_STAR
       Name: '&aVanish Stars &7(Right Click)'
@@ -102,6 +108,8 @@ Abilities:
   Thunderbolt:
     Enabled: true
     Cooldown: 0
+    damage: 4.0
+    fire-duration: 5 SECONDS
     Item:
       Material: BLAZE_ROD
       Name: '&aLightning Strike &7(Click Player)'
@@ -116,6 +124,7 @@ Abilities:
   Vampire:
     Enabled: true
     Cooldown: 0
+    damage: 4.0
     Item:
       Material: GHAST_TEAR
       Name: '&aBlood Suckers &7(Click Player)'

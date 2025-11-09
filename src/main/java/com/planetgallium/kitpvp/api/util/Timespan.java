@@ -128,6 +128,11 @@ public class Timespan {
     }
 
     @NotNull
+    public static Timespan valueOf(long time, @NotNull TimeUnit unit) {
+        return valueOf(unit.toMillis(time));
+    }
+
+    @NotNull
     public static Timespan valueOf(long millis) {
         if (millis < 1) {
             return ZERO;

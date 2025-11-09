@@ -3,6 +3,7 @@ package com.planetgallium.kitpvp.api.ability;
 import com.cryptomorin.xseries.XMaterial;
 import com.cryptomorin.xseries.XSound;
 import com.planetgallium.kitpvp.api.util.ItemPredicate;
+import com.planetgallium.kitpvp.api.util.Timespan;
 import com.planetgallium.kitpvp.util.Toolkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
@@ -14,10 +15,14 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.TimeUnit;
+
 public class ArcherAbility extends ItemAbility {
 
     private static final XMaterial FIRE_MATERIAL = XMaterial.MAGMA_CREAM;
     private static final XMaterial NO_FIRE_MATERIAL = XMaterial.SLIME_BALL;
+
+    private Timespan fireDuration = Timespan.valueOf(50, TimeUnit.SECONDS);
 
     private ItemPredicate fireItem = ItemPredicate.empty();
     private ItemPredicate noFireItem = ItemPredicate.empty();
@@ -36,6 +41,8 @@ public class ArcherAbility extends ItemAbility {
     @Override
     public void deserialize(@NotNull ConfigurationSection section) {
         super.deserialize(section);
+
+        this.fireDuration = Timespan.valueOf(section.get("fire-duration")).orElseGet(() -> Timespan.valueOf(50, TimeUnit.SECONDS));
 
         // Item
         if (section.isSet("Item")) {
@@ -71,6 +78,8 @@ public class ArcherAbility extends ItemAbility {
     @Override
     public void serialize(@NotNull ConfigurationSection section) {
         super.serialize(section);
+
+        section.set("fire-duration", this.fireDuration.as(Timespan.CONFIG_FORMAT));
 
         if (this.fireMessage != null) {
             section.set("Message.Fire", this.fireMessage.self());
@@ -146,7 +155,7 @@ public class ArcherAbility extends ItemAbility {
 
         ItemStack ammo = player.getInventory().getItem(ammoSlot);
 
-        event.getProjectile().setFireTicks(1000);
+        event.getProjectile().setFireTicks((int) this.fireDuration.toTicks());
         if (this.sound != null) {
             this.sound.soundPlayer().play(player.getLocation());
         }

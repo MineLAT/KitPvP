@@ -2,6 +2,7 @@ package com.planetgallium.kitpvp.api.ability;
 
 import com.cryptomorin.xseries.XMaterial;
 import org.bukkit.GameMode;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.TNTPrimed;
@@ -16,6 +17,8 @@ public class BomberAbility extends ItemAbility {
 
     private static final XMaterial MATERIAL = XMaterial.COAL;
 
+    private int amount = 5;
+
     public BomberAbility() {
         super(ItemAbility.BOMBER);
     }
@@ -26,11 +29,25 @@ public class BomberAbility extends ItemAbility {
     }
 
     @Override
+    public void deserialize(@NotNull ConfigurationSection section) {
+        super.deserialize(section);
+
+        this.amount = section.getInt("amount", 5);
+    }
+
+    @Override
+    public void serialize(@NotNull ConfigurationSection section) {
+        super.serialize(section);
+
+        section.set("amount", this.amount);
+    }
+
+    @Override
     public void run(@NotNull PlayerInteractEvent event, @NotNull Player player, @NotNull ItemStack item) {
-        player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 5 * 20, 2));
+        player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, this.amount * 20, 2));
 
         new BukkitRunnable() {
-            public int iterations = 5;
+            public int iterations = BomberAbility.this.amount;
 
             @Override
             public void run() {
