@@ -81,6 +81,8 @@ public abstract class ItemAbility extends Ability {
         Toolkit.setHandItemForInteraction(event, item);
 
         run(player, agent);
+
+        cooldown(player);
     }
 
 

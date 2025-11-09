@@ -1,7 +1,6 @@
 package com.planetgallium.kitpvp.api;
 
 import com.planetgallium.kitpvp.Game;
-import com.planetgallium.kitpvp.util.Resources;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -14,31 +13,28 @@ import com.planetgallium.kitpvp.util.Toolkit;
 
 public class EventListener implements Listener {
 
-	private final Resources resources;
 	private final Arena arena;
 	
 	public EventListener(Game plugin) {
-		this.resources = plugin.getResources();
 		this.arena = plugin.getArena();
 	}
 	
 	@EventHandler
-	public void onAbility(PlayerInteractEvent e) {
-		if (e.getAction() == Action.RIGHT_CLICK_AIR || e.getAction() == Action.RIGHT_CLICK_BLOCK) {
-			if (Toolkit.inArena(e.getPlayer())) {
-				Player p = e.getPlayer();
-				ItemStack currentItem = Toolkit.getHandItemForInteraction(e);
+	public void onAbility(PlayerInteractEvent event) {
+		if (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+			if (Toolkit.inCombatArena(event.getPlayer())) {
+				final Player player = event.getPlayer();
+                if (!Toolkit.isAbilityPlayer(player, false)) {
+                    return;
+                }
 
-				if (resources.getConfig().getBoolean("Arena.AbilitiesRequireKit") &&
-						!arena.getKits().playerHasKit(p.getUniqueId())) {
-					return; // if "AbilitiesRequireKit" true, and player does not have kit, return
-				}
+				final ItemStack item = Toolkit.getHandItemForInteraction(event);
 
-				if (currentItem.hasItemMeta() && currentItem.getItemMeta().hasDisplayName()) {
-					Ability abilityResult = arena.getAbilities().getAbilityByActivator(currentItem);
+				if (item.hasItemMeta() && item.getItemMeta().hasDisplayName()) {
+					Ability abilityResult = arena.getAbilities().getAbilityByActivator(item);
 
 					if (abilityResult != null) {
-                        abilityResult.run(e, p, currentItem);
+                        abilityResult.run(event, player, item);
 					}
 				}
 			}

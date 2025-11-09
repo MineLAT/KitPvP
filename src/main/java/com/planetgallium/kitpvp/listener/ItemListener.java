@@ -1,5 +1,6 @@
 package com.planetgallium.kitpvp.listener;
 
+import com.cryptomorin.xseries.XMaterial;
 import com.planetgallium.kitpvp.Game;
 import com.planetgallium.kitpvp.api.Ability;
 import com.planetgallium.kitpvp.api.ability.ArcherAbility;
@@ -13,32 +14,34 @@ import com.planetgallium.kitpvp.api.ability.TricksterAbility;
 import com.planetgallium.kitpvp.api.ability.VampireAbility;
 import com.planetgallium.kitpvp.api.ability.WarperAbility;
 import com.planetgallium.kitpvp.api.ability.WitchAbility;
-import com.planetgallium.kitpvp.api.util.Cooldown;
 import com.planetgallium.kitpvp.game.Arena;
 import com.planetgallium.kitpvp.game.Utilities;
 import com.planetgallium.kitpvp.util.Resource;
 import com.planetgallium.kitpvp.util.Resources;
 import com.planetgallium.kitpvp.util.Toolkit;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.entity.EntityShootBowEvent;
+import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.metadata.MetadataValue;
 import org.bukkit.util.Vector;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Consumer;
+import java.util.Optional;
+import java.util.function.Predicate;
 
 public class ItemListener implements Listener {
 
@@ -83,68 +86,81 @@ public class ItemListener implements Listener {
         });
 	}
 
-    private void abilities(@NotNull Player player, @NotNull ItemStack item, @NotNull Consumer<Ability> consumer) {
+    @NotNull
+    @SuppressWarnings("unchecked")
+    public <T extends ItemAbility> T getAbility(@NotNull @MagicConstant(valuesFromClass = ItemAbility.class) String name) {
+        return (T) this.itemAbilities.get(name);
+    }
+
+    @NotNull
+    public Optional<ItemAbility> getAbility(@NotNull Predicate<ItemAbility> predicate) {
         for (ItemAbility ability : this.itemAbilities.values()) {
-            if (!ability.isItem(item)) {
-                continue;
+            if (predicate.test(ability)) {
+                return Optional.of(ability);
             }
-
-            final String permission = "kp.ability." + ability.name().toLowerCase();
-            if (!player.hasPermission(permission)) {
-                player.sendMessage(resources.getMessages().fetchString("Messages.General.Permission").replace("%permission%", permission));
-                continue;
-            }
-
-            if (config.getBoolean("Arena.AbilitiesRequireKit") && !arena.getKits().playerHasKit(player.getUniqueId())) {
-                player.sendMessage(resources.getMessages().fetchString("Messages.Error.Kit"));
-                continue;
-            }
-
-            if (!utilities.isCombatActionPermittedInRegion(player)) {
-                continue;
-            }
-
-            Cooldown cooldownRemaining = arena.getCooldowns().getRemainingCooldown(player, ability);
-            if (cooldownRemaining.toMillis() > 0) {
-                player.sendMessage(resources.getMessages().fetchString("Messages.Error.CooldownAbility").replace("%cooldown%", cooldownRemaining.as(Cooldown.READABLE_FORMAT)));
-                return;
-            }
-
-            consumer.accept(ability);
         }
+        return Optional.empty();
+    }
+
+    @NotNull
+    public Collection<ItemAbility> getAbilities() {
+        return this.itemAbilities.values();
     }
 
 	@EventHandler
-	public void onInteract(PlayerInteractEvent e) {
-		Player p = e.getPlayer();
+	public void onInteract(PlayerInteractEvent event) {
+		final Player player = event.getPlayer();
+		if ((event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) && Toolkit.inCombatArena(player)) {
+			final ItemStack interactedItem = Toolkit.getHandItemForInteraction(event);
 
-		if (Toolkit.inArena(p) && (e.getAction() == Action.RIGHT_CLICK_AIR || e.getAction() == Action.RIGHT_CLICK_BLOCK)) {
+            for (ItemAbility ability : getAbilities()) {
+                if (ability.isListening(PlayerInteractEvent.class)) {
+                    if (ability.isItem(interactedItem)) {
+                        if (!Toolkit.isAbilityPlayer(player, true)) {
+                            event.setCancelled(true);
+                            break;
+                        }
+                        if (ability.isAllowed(player, true) && ability.isReady(player, true)) {
+                            if (XMaterial.matchXMaterial(interactedItem) == XMaterial.ENDER_PEARL) {
+                                event.setCancelled(true);
+                            }
 
-			ItemStack interactedItem = Toolkit.getHandItemForInteraction(e);
-            abilities(p, interactedItem, ability -> ability.run(e, p, interactedItem));
+                            ability.run(event, player, interactedItem);
+                        }
+                    } else if (ability instanceof WitchAbility) {
+                        final WitchAbility witchAbility = (WitchAbility) ability;
+                        if (witchAbility.isPotionItem(interactedItem)) {
+                            if (!Toolkit.isAbilityPlayer(player, true)) {
+                                event.setCancelled(true);
+                                break;
+                            }
+                            if (ability.isAllowed(player, true) && ability.isReady(player, true)) {
+                                witchAbility.runSplash(event, player, interactedItem);
+                            }
+                        }
+                    }
+                }
+            }
 
-			if (isSplashPotion(interactedItem)) {
-                final WitchAbility ability = (WitchAbility) this.itemAbilities.get(ItemAbility.WITCH);
-                ability.runSplash(e, p, interactedItem);
-			} else if (Toolkit.hasMatchingMaterial(interactedItem, "TNT")) {
-				specialTNT(e, p, interactedItem);
+            if (XMaterial.matchXMaterial(interactedItem) == XMaterial.TNT) {
+				specialTNT(event, player, interactedItem);
 
 			}
 
 			/* Kit Item and custom Arena Items */
 
-			final Map<String, ItemStack> items = arena.getItems().get(p.getUniqueId());
+			final Map<String, ItemStack> items = arena.getItems().get(player.getUniqueId());
 			if (items != null) {
 				for (Map.Entry<String, ItemStack> entry : items.entrySet()) {
 					final ItemStack item = entry.getValue();
 					if (interactedItem.getType() == item.getType() && Toolkit.hasMatchingDisplayName(interactedItem, item)) {
-						Toolkit.runCommands(p, config.getStringList("Items." + entry.getKey() + ".Commands"), "none", "none");
+						Toolkit.runCommands(player, config.getStringList("Items." + entry.getKey() + ".Commands"), "none", "none");
 
 						if (entry.getKey().equalsIgnoreCase("kits")) {
-							arena.getMenus().getKitMenu().open(p);
+							arena.getMenus().getKitMenu().open(player);
 						}
 
-						e.setCancelled(true);
+						event.setCancelled(true);
 					}
 				}
 			}
@@ -153,20 +169,23 @@ public class ItemListener implements Listener {
 	}
 
 	@EventHandler
-	public void onInteract(PlayerInteractEntityEvent e) {
-		Player damager = e.getPlayer();
+	public void onInteract(PlayerInteractEntityEvent event) {
+		final Player player = event.getPlayer();
+		if (event.getRightClicked() instanceof Player && Toolkit.inCombatArena(player)) {
+			final ItemStack item = Toolkit.getHandItemForInteraction(event);
+			final Player agent = (Player) event.getRightClicked();
 
-		if (Toolkit.inArena(damager) && e.getRightClicked().getType() == EntityType.PLAYER) {
-			ItemStack interactedItem = Toolkit.getHandItemForInteraction(e);
-			Player damagedPlayer = (Player) e.getRightClicked();
-
-			if (config.getBoolean("Arena.NoKitProtection")) {
-				if (!arena.getKits().playerHasKit(damagedPlayer.getUniqueId())) {
-					return;
-				}
-			}
-
-            abilities(damager, interactedItem, ability -> ability.run(e, damager, damagedPlayer, interactedItem));
+            for (ItemAbility ability : getAbilities()) {
+                if (ability.isListening(PlayerInteractEntityEvent.class) && ability.isItem(item)) {
+                    if (!Toolkit.isAbilityPlayer(player, true) || !Toolkit.inCombatArena(player, agent)) {
+                        event.setCancelled(true);
+                        break;
+                    }
+                    if (ability.isAllowed(player, true) && ability.isReady(player, true)) {
+                        ability.run(event, player, agent, item);
+                    }
+                }
+            }
 		}
 	}
 
@@ -194,96 +213,65 @@ public class ItemListener implements Listener {
 	}
 
 	@EventHandler
-	public void onProjectileHitsEntity(EntityDamageByEntityEvent e) {
-		if (e.getEntity() instanceof Player && e.getCause() == DamageCause.PROJECTILE) {
-
-			if (e.getDamager() instanceof ThrowableProjectile) {
-                if (e.getDamager() instanceof Snowball) {
-                    Player damagedPlayer = (Player) e.getEntity();
-                    Snowball snowball = (Snowball) e.getDamager();
-                    if (hitBySnowball(damagedPlayer, snowball)) {
-                        return;
+	public void onProjectileHitsEntity(EntityDamageByEntityEvent event) {
+		if (event.getEntity() instanceof Player) {
+            final Player agent = (Player) event.getEntity();
+            if (event.getDamager() instanceof Projectile) {
+                final Projectile projectile = (Projectile) event.getDamager();
+                if (projectile.getShooter() instanceof Player) {
+                    final Player player = (Player) projectile.getShooter();
+                    for (MetadataValue meta : projectile.getMetadata(Ability.META_KEY)) {
+                        final Object value = meta.value();
+                        if (value instanceof ItemAbility) {
+                            final ItemAbility ability = (ItemAbility) value;
+                            if (Toolkit.inCombatArena(player, agent)) {
+                                ability.run(event, player, agent);
+                            }
+                        }
                     }
                 }
-				Player damagedPlayer = (Player) e.getEntity();
-                ThrowableProjectile projectile = (ThrowableProjectile) e.getDamager();
-				hitByProjectile(damagedPlayer, projectile);
-			}
+            } else if (event.getDamager() instanceof Player) {
+                // TODO: Detect ENTITY_ATTACK & ENTITY_SWEEP_ATTACK
+            }
 		}
 	}
 
-	private boolean hitBySnowball(Player damagedPlayer, Snowball snowball) {
-		if (snowball.getCustomName() != null && snowball.getCustomName().equals("bullet")) {
-			if (Toolkit.inArena(damagedPlayer) && arena.getKits().playerHasKit(damagedPlayer.getUniqueId())) {
-				damagedPlayer.damage(4.5);
-			}
-            return true;
-		}
-        return false;
-	}
-
-	private void hitByProjectile(Player damagedPlayer, ThrowableProjectile projectile) {
-        if (!(projectile.getShooter() instanceof Player)) {
-            return;
+    @EventHandler
+    public void onProjectileLaunch(ProjectileLaunchEvent event) {
+        if (event.getEntity() instanceof ThrowableProjectile && event.getEntity().getShooter() instanceof Player) {
+            final ThrowableProjectile projectile = (ThrowableProjectile) event.getEntity();
+            final Player player = (Player) projectile.getShooter();
+            if (Toolkit.inCombatArena(player)) {
+                for (ItemAbility ability : getAbilities()) {
+                    if (ability.isListening(ProjectileLaunchEvent.class) && ability.isItem(projectile.getItem())) {
+                        if (!Toolkit.isAbilityPlayer(player, true)) {
+                            event.setCancelled(true);
+                            break;
+                        }
+                        if (ability.isAllowed(player, true) && ability.isReady(player, true)) {
+                            ability.run(event, player);
+                        }
+                    }
+                }
+            }
         }
-
-        final TricksterAbility ability = (TricksterAbility) this.itemAbilities.get(ItemAbility.TRICKSTER);
-        if (!ability.isItem(projectile.getItem())) {
-            return;
-        }
-
-        if (!Toolkit.inArena(damagedPlayer) || !arena.getKits().playerHasKit(damagedPlayer.getUniqueId())) {
-            return;
-        }
-
-        Player shooter = (Player) projectile.getShooter();
-        Location shooterLocation = shooter.getLocation();
-
-        if (!utilities.isCombatActionPermittedInRegion(damagedPlayer)) {
-            shooter.sendMessage(resources.getMessages().fetchString("Messages.Error.PVP"));
-            return;
-        }
-
-        shooter.teleport(damagedPlayer);
-        damagedPlayer.teleport(shooterLocation);
-
-        ability.run(shooter, damagedPlayer);
-	}
+    }
 
 	@EventHandler
-	public void onBowShot(EntityShootBowEvent e) {
-		if (e.getEntity() instanceof Player && Toolkit.inArena(e.getEntity())) {
-			Player p = (Player) e.getEntity();
-
-			if (!p.hasPermission("kp.ability.archer")) {
-				return;
-			}
-
-            final ArcherAbility ability = (ArcherAbility) this.itemAbilities.get(ItemAbility.ARCHER);
-
-			final Integer ammoSlot = ability.fireItem().slot(p);
-            if (ammoSlot == null) {
-                return;
-            }
-
-            ItemStack ammo = p.getInventory().getItem(ammoSlot);
-
-            e.getProjectile().setFireTicks(1000);
-            if (ability.sound() != null) {
-                ability.sound().soundPlayer().play(p.getLocation());
-            }
-
-            if (ammo.getAmount() == 1) {
-                p.getInventory().setItem(ammoSlot, new ItemStack(Material.AIR));
-            } else {
-                ammo.setAmount(ammo.getAmount() - 1);
+	public void onBowShot(EntityShootBowEvent event) {
+		if (event.getEntity() instanceof Player && Toolkit.inArena(event.getEntity())) {
+			final Player player = (Player) event.getEntity();
+            for (ItemAbility ability : getAbilities()) {
+                if (ability.isListening(EntityShootBowEvent.class) && ability.activator().test(event.getBow())) {
+                    if (!Toolkit.isAbilityPlayer(player, true)) {
+                        event.setCancelled(true);
+                        break;
+                    }
+                    if (ability.isAllowed(player, true) && ability.isReady(player, true)) {
+                        ability.run(event, player);
+                    }
+                }
             }
 		}
 	}
-
-	public boolean isSplashPotion(ItemStack item) {
-		int serverVersion = Toolkit.versionToNumber();
-		return Toolkit.hasMatchingMaterial(item, serverVersion == 18 ? "POTION" : "SPLASH_POTION");
-	}
-
 }

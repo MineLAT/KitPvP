@@ -7,6 +7,7 @@ Abilities:
     Enabled: true
     Cooldown: 0
     Item:
+      Name: '&aArcher''s Bow'
       Fire: '&aFire Arrows &eON &7(Right Click)'
       NoFire: '&aFire Arrows &cOFF &7(Right Click)'
       Amount: 10

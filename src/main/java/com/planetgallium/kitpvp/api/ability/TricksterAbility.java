@@ -2,9 +2,11 @@ package com.planetgallium.kitpvp.api.ability;
 
 import com.cryptomorin.xseries.XMaterial;
 import com.planetgallium.kitpvp.util.Toolkit;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class TricksterAbility extends ItemAbility {
 
@@ -20,10 +22,22 @@ public class TricksterAbility extends ItemAbility {
     }
 
     @Override
-    public void run(@NotNull Player player, @Nullable Player agent) {
-        super.run(player, agent);
-        if (agent != null && this.message != null) {
+    public void run(@NotNull ProjectileLaunchEvent event, @NotNull Player player) {
+        metadata(event.getEntity());
+    }
+
+    @Override
+    public void run(@NotNull EntityDamageByEntityEvent event, @NotNull Player player, @NotNull Player agent) {
+        final Location location = player.getLocation();
+
+        player.teleport(agent);
+        agent.teleport(location);
+
+        run(player, agent);
+        if (this.message != null) {
             this.message.send(agent, s -> Toolkit.translate(agent, s.replace("%player%", player.getName())));
         }
+
+        cooldown(player);
     }
 }

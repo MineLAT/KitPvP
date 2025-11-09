@@ -25,8 +25,6 @@ public class WarperAbility extends ItemAbility {
 
     @Override
     public void run(@NotNull PlayerInteractEvent event, @NotNull Player player, @NotNull ItemStack item) {
-        event.setCancelled(true);
-
         final Player nearestPlayer = Toolkit.getNearestPlayer(player, config().getInt("PlayerTracker.TrackBelowY"));
 
         if (Bukkit.getServer().getOnlinePlayers().size() > 1 && nearestPlayer != null) {

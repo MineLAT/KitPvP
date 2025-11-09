@@ -7,6 +7,7 @@ import com.planetgallium.kitpvp.util.Toolkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
+import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -25,6 +26,11 @@ public class ArcherAbility extends ItemAbility {
 
     public ArcherAbility() {
         super(ItemAbility.ARCHER);
+    }
+
+    @Override
+    protected @NotNull XMaterial type() {
+        return XMaterial.BOW;
     }
 
     @Override
@@ -129,5 +135,28 @@ public class ArcherAbility extends ItemAbility {
         }
 
         XSound.UI_BUTTON_CLICK.play(player);
+    }
+
+    @Override
+    public void run(@NotNull EntityShootBowEvent event, @NotNull Player player) {
+        final Integer ammoSlot = this.fireItem.slot(player);
+        if (ammoSlot == null) {
+            return;
+        }
+
+        ItemStack ammo = player.getInventory().getItem(ammoSlot);
+
+        event.getProjectile().setFireTicks(1000);
+        if (this.sound != null) {
+            this.sound.soundPlayer().play(player.getLocation());
+        }
+
+        if (ammo.getAmount() == 1) {
+            player.getInventory().setItem(ammoSlot, new ItemStack(Material.AIR));
+        } else {
+            ammo.setAmount(ammo.getAmount() - 1);
+        }
+
+        cooldown(player);
     }
 }

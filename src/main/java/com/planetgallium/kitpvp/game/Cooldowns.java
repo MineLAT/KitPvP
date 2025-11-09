@@ -6,6 +6,7 @@ import com.planetgallium.kitpvp.api.Kit;
 import com.planetgallium.kitpvp.util.CacheManager;
 import com.planetgallium.kitpvp.api.util.Cooldown;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 
@@ -19,8 +20,8 @@ public class Cooldowns {
 		this.database = plugin.getDatabase();
 	}
 
-	public void setAbilityCooldown(UUID uniqueId, String abilityName) {
-		CacheManager.getPlayerAbilityCooldowns(uniqueId).put(abilityName, System.currentTimeMillis());
+	public void setAbilityCooldown(@NotNull UUID uniqueId, @NotNull Ability ability) {
+		CacheManager.getPlayerAbilityCooldowns(uniqueId).put(ability.name(), System.currentTimeMillis());
 	}
 
 	public void clearPlayerAbilityCooldowns(UUID uniqueId) {

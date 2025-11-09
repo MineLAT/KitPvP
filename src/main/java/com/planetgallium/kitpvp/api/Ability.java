@@ -6,28 +6,37 @@ import com.cryptomorin.xseries.XSound;
 import com.planetgallium.kitpvp.Game;
 import com.planetgallium.kitpvp.api.util.ItemPredicate;
 import com.planetgallium.kitpvp.api.util.Cooldown;
-import com.planetgallium.kitpvp.game.Arena;
-import com.planetgallium.kitpvp.util.Resources;
 import com.planetgallium.kitpvp.util.Toolkit;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Event;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityShootBowEvent;
+import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.metadata.FixedMetadataValue;
+import org.bukkit.metadata.Metadatable;
 import org.bukkit.potion.PotionEffect;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.UnaryOperator;
 
 public class Ability {
+
+    public static final String META_KEY = "kitpvp:ability";
 
     @NotNull
     public static Ability sample(@NotNull String prefix) {
@@ -52,6 +61,8 @@ public class Ability {
     protected XSound.Record sound;
     protected final List<PotionEffect> effects;
     protected final List<String> commands;
+
+    private Set<Class<? extends Event>> listeners;
 
     public Ability(@NotNull String name) {
         this.name = name;
@@ -209,8 +220,52 @@ public class Ability {
         return Collections.unmodifiableList(commands);
     }
 
+    public boolean isListening(@NotNull Class<?> event) {
+        if (this.listeners == null) {
+            this.listeners = new HashSet<>();
+            if (getClass() == Ability.class) {
+                this.listeners.add(PlayerInteractEvent.class);
+            } else {
+                for (Method method : getClass().getDeclaredMethods()) {
+                    if (method.getName().equals("run") && Event.class.isAssignableFrom(method.getParameterTypes()[0])) {
+                        this.listeners.add(method.getParameterTypes()[0].asSubclass(Event.class));
+                    }
+                }
+            }
+        }
+        return this.listeners.contains(event);
+    }
+
     public boolean isItem(@NotNull ItemStack item) {
         return activator.test(item);
+    }
+
+    public boolean isAllowed(@NotNull Player player, boolean message) {
+        final String permission = "kp.ability." + this.name.toLowerCase();
+        if (!player.hasPermission(permission)) {
+            if (message) {
+                player.sendMessage(Game.getInstance().getResources().getMessages().fetchString("Messages.General.Permission").replace("%permission%", permission));
+            }
+            return false;
+        }
+
+        return true;
+    }
+
+    public boolean isReady(@NotNull Player player, boolean message) {
+        if (this.cooldown == Cooldown.ZERO) {
+            return true;
+        }
+
+        final Cooldown cooldownRemaining = Game.getInstance().getArena().getCooldowns().getRemainingCooldown(player, this);
+        if (cooldownRemaining.toMillis() > 0) {
+            if (message) {
+                player.sendMessage(Game.getInstance().getResources().getMessages().fetchString("Messages.Error.CooldownAbility").replace("%cooldown%", cooldownRemaining.as(Cooldown.READABLE_FORMAT)));
+            }
+            return false;
+        }
+
+        return true;
     }
 
     public void run(@NotNull Player player) {
@@ -256,35 +311,41 @@ public class Ability {
 
         event.setCancelled(true);
 
-        final Arena arena = Game.getInstance().getArena();
-        if (!arena.getUtilities().isCombatActionPermittedInRegion(player)) {
-            return;
-        }
-        final Resources resources = Game.getInstance().getResources();
+        if (isAllowed(player, true) && isReady(player, true)) {
+            run(player);
 
-        String abilityPermission = "kp.ability." + this.name.toLowerCase();
-        if (!player.hasPermission(abilityPermission)) {
-            player.sendMessage(resources.getMessages().fetchString("Messages.General.Permission").replace("%permission%", abilityPermission));
-            return;
-        }
-
-        Cooldown cooldownRemaining = arena.getCooldowns().getRemainingCooldown(player, this);
-        if (cooldownRemaining.toMillis() > 0) {
-            player.sendMessage(resources.getMessages().fetchString("Messages.Error.CooldownAbility").replace("%cooldown%", cooldownRemaining.as(Cooldown.READABLE_FORMAT)));
-            return;
-        }
-
-        run(player);
-
-        if (this.cooldown == Cooldown.ZERO) {
-            item.setAmount(item.getAmount() - 1);
-        } else {
-            arena.getCooldowns().setAbilityCooldown(player.getUniqueId(), this.name);
+            if (this.cooldown == Cooldown.ZERO) {
+                item.setAmount(item.getAmount() - 1);
+            } else {
+                cooldown(player);
+            }
         }
     }
 
     public void run(@NotNull PlayerInteractEntityEvent event, @NotNull Player player, @NotNull Player agent, @NotNull ItemStack item) {
         // empty method
+    }
+
+    public void run(@NotNull ProjectileLaunchEvent event, @NotNull Player player) {
+        // empty method
+    }
+
+    public void run(@NotNull EntityShootBowEvent event, @NotNull Player player) {
+        // empty method
+    }
+
+    public void run(@NotNull EntityDamageByEntityEvent event, @NotNull Player player, @NotNull Player agent) {
+        // empty method
+    }
+
+    protected void cooldown(@NotNull Player player) {
+        if (this.cooldown != Cooldown.ZERO) {
+            Game.getInstance().getArena().getCooldowns().setAbilityCooldown(player.getUniqueId(), this);
+        }
+    }
+
+    protected void metadata(@NotNull Metadatable metadatable) {
+        metadatable.setMetadata(META_KEY, new FixedMetadataValue(Game.getInstance(), this));
     }
 
     public static class Message {

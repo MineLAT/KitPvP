@@ -29,6 +29,10 @@ public class WitchAbility extends ItemAbility {
         return MATERIAL;
     }
 
+    public boolean isPotionItem(@NotNull ItemStack item) {
+        return XMaterial.matchXMaterial(item) == XMaterial.SPLASH_POTION && Toolkit.singleLineLoreMatches(item, "X");
+    }
+
     @Override
     public void run(@NotNull PlayerInteractEvent event, @NotNull Player player, @NotNull ItemStack item) {
         event.setCancelled(true);
@@ -37,10 +41,6 @@ public class WitchAbility extends ItemAbility {
     }
 
     public void runSplash(@NotNull PlayerInteractEvent event, @NotNull Player player, @NotNull ItemStack item) {
-        if (!Toolkit.singleLineLoreMatches(item, "X")) {
-            return;
-        }
-
         Toolkit.SlotWrapper slotUsed = Toolkit.getSlotUsedForInteraction(event);
         ItemStack randomizedWitchPotion = createWitchPotion();
 
@@ -54,6 +54,8 @@ public class WitchAbility extends ItemAbility {
                 CacheManager.getPotionSwitcherUsers().add(player.getUniqueId());
             }
         }, 100L);
+
+        cooldown(player);
     }
 
     @NotNull

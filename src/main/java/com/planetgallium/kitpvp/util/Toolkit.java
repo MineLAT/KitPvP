@@ -50,6 +50,42 @@ public class Toolkit {
 		return inArena(entity.getWorld());
 	}
 
+    public static boolean inCombatArena(@NotNull Player player) {
+        if (!inArena(player)) {
+            return false;
+        }
+
+        if (!Game.getInstance().getArena().getUtilities().isCombatActionPermittedInRegion(player)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public static boolean inCombatArena(@NotNull Player player, @NotNull Player agent) {
+        if (!inCombatArena(agent)) {
+            player.sendMessage(Game.getInstance().getResources().getMessages().fetchString("Messages.Error.PVP"));
+            return false;
+        }
+
+        if (Game.getInstance().getResources().getConfig().getBoolean("Arena.NoKitProtection")) {
+            return Game.getInstance().getArena().getKits().playerHasKit(agent.getUniqueId());
+        }
+
+        return true;
+    }
+
+    public static boolean isAbilityPlayer(@NotNull Player player, boolean message) {
+        if (Game.getInstance().getResources().getConfig().getBoolean("Arena.AbilitiesRequireKit") && !Game.getInstance().getArena().getKits().playerHasKit(player.getUniqueId())) {
+            if (message) {
+                player.sendMessage(Game.getInstance().getResources().getMessages().fetchString("Messages.Error.Kit"));
+            }
+            return false;
+        }
+
+        return true;
+    }
+
 	public static Player getNearestPlayer(Player player, int maxY) {
 		return (Player) getNearestPlayerData(player, maxY)[0];
 	}
