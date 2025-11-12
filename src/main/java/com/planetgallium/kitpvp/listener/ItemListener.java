@@ -110,13 +110,13 @@ public class ItemListener implements Listener {
 	@EventHandler
 	public void onInteract(PlayerInteractEvent event) {
 		final Player player = event.getPlayer();
-		if ((event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) && Toolkit.inCombatArena(player)) {
+		if ((event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) && Toolkit.inArena(player)) {
 			final ItemStack interactedItem = Toolkit.getHandItemForInteraction(event);
 
             for (ItemAbility ability : getAbilities()) {
                 if (ability.isListening(PlayerInteractEvent.class)) {
                     if (ability.isItem(interactedItem)) {
-                        if (!Toolkit.isAbilityPlayer(player, true)) {
+                        if (!utilities.isCombatActionPermittedInRegion(player) || !Toolkit.isAbilityPlayer(player, true)) {
                             event.setCancelled(true);
                             break;
                         }
@@ -130,7 +130,7 @@ public class ItemListener implements Listener {
                     } else if (ability instanceof WitchAbility) {
                         final WitchAbility witchAbility = (WitchAbility) ability;
                         if (witchAbility.isPotionItem(interactedItem)) {
-                            if (!Toolkit.isAbilityPlayer(player, true)) {
+                            if (!utilities.isCombatActionPermittedInRegion(player) || !Toolkit.isAbilityPlayer(player, true)) {
                                 event.setCancelled(true);
                                 break;
                             }
@@ -171,13 +171,13 @@ public class ItemListener implements Listener {
 	@EventHandler
 	public void onInteract(PlayerInteractEntityEvent event) {
 		final Player player = event.getPlayer();
-		if (event.getRightClicked() instanceof Player && Toolkit.inCombatArena(player)) {
+		if (event.getRightClicked() instanceof Player && Toolkit.inArena(player)) {
 			final ItemStack item = Toolkit.getHandItemForInteraction(event);
 			final Player agent = (Player) event.getRightClicked();
 
             for (ItemAbility ability : getAbilities()) {
                 if (ability.isListening(PlayerInteractEntityEvent.class) && ability.isItem(item)) {
-                    if (!Toolkit.isAbilityPlayer(player, true) || !Toolkit.inCombatArena(player, agent)) {
+                    if (!utilities.isCombatActionPermittedInRegion(player) || !Toolkit.isAbilityPlayer(player, true) || !Toolkit.inCombatArena(player, agent)) {
                         event.setCancelled(true);
                         break;
                     }
@@ -241,10 +241,10 @@ public class ItemListener implements Listener {
         if (event.getEntity() instanceof ThrowableProjectile && event.getEntity().getShooter() instanceof Player) {
             final ThrowableProjectile projectile = (ThrowableProjectile) event.getEntity();
             final Player player = (Player) projectile.getShooter();
-            if (Toolkit.inCombatArena(player)) {
+            if (Toolkit.inArena(player)) {
                 for (ItemAbility ability : getAbilities()) {
                     if (ability.isListening(ProjectileLaunchEvent.class) && ability.isItem(projectile.getItem())) {
-                        if (!Toolkit.isAbilityPlayer(player, true)) {
+                        if (!utilities.isCombatActionPermittedInRegion(player) || !Toolkit.isAbilityPlayer(player, true)) {
                             event.setCancelled(true);
                             break;
                         }
@@ -263,7 +263,7 @@ public class ItemListener implements Listener {
 			final Player player = (Player) event.getEntity();
             for (ItemAbility ability : getAbilities()) {
                 if (ability.isListening(EntityShootBowEvent.class) && ability.activator().test(event.getBow())) {
-                    if (!Toolkit.isAbilityPlayer(player, true)) {
+                    if (!utilities.isCombatActionPermittedInRegion(player) || !Toolkit.isAbilityPlayer(player, true)) {
                         event.setCancelled(true);
                         break;
                     }

@@ -55,7 +55,7 @@ public class Toolkit {
             return false;
         }
 
-        if (!Game.getInstance().getArena().getUtilities().isCombatActionPermittedInRegion(player)) {
+        if (!Game.getInstance().getArena().getUtilities().isCombatActionPermittedInRegion(player, false)) {
             return false;
         }
 

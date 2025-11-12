@@ -97,12 +97,18 @@ public class Utilities {
     }
 
     public boolean isCombatActionPermittedInRegion(Player p) {
+        return isCombatActionPermittedInRegion(p, true);
+    }
+
+    public boolean isCombatActionPermittedInRegion(Player p, boolean message) {
         if (plugin.hasWorldGuard()) {
             if (WorldGuardAPI.getInstance().allows(p, WorldGuardFlag.PVP.getFlag())) {
                 return true;
             }
 
-            p.sendMessage(resources.getMessages().fetchString("Messages.Error.PVP"));
+            if (message) {
+                p.sendMessage(resources.getMessages().fetchString("Messages.Error.PVP"));
+            }
             return false;
         }
         return true;

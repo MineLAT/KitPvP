@@ -22,7 +22,7 @@ public class EventListener implements Listener {
 	@EventHandler
 	public void onAbility(PlayerInteractEvent event) {
 		if (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
-			if (Toolkit.inCombatArena(event.getPlayer())) {
+			if (Toolkit.inArena(event.getPlayer())) {
 				final Player player = event.getPlayer();
                 if (!Toolkit.isAbilityPlayer(player, false)) {
                     return;
@@ -33,7 +33,7 @@ public class EventListener implements Listener {
 				if (item.hasItemMeta() && item.getItemMeta().hasDisplayName()) {
 					Ability abilityResult = arena.getAbilities().getAbilityByActivator(item);
 
-					if (abilityResult != null) {
+					if (abilityResult != null && arena.getUtilities().isCombatActionPermittedInRegion(player)) {
                         abilityResult.run(event, player, item);
 					}
 				}
