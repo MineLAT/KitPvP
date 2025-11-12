@@ -53,6 +53,19 @@ public class Timespan {
         }
     };
 
+    private static boolean isOldFormat(@NotNull String s) {
+        if (s.contains(":")) {
+            return true;
+        } else if (!s.contains(" ")) {
+            for (int i = 0; i < s.length(); i++) {
+                if (!Character.isDigit(s.charAt(i))) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     @NotNull
     public static Optional<Timespan> valueOf(@Nullable Object object) {
         if (object instanceof ConfigurationSection) {
@@ -93,7 +106,7 @@ public class Timespan {
         }
 
         // Old format compatibility
-        if (s.contains(":")) {
+        if (isOldFormat(s)) {
             long millis = 0;
 
             for (String part : s.split(":")) {
