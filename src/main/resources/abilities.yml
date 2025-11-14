@@ -165,3 +165,19 @@ Abilities:
       Sound: FIREWORK_LAUNCH
       Pitch: 1
       Enabled: true
+  Fly:
+    Enabled: true
+    Cooldown: 0
+    jump: 0.5
+    duration: 3 SECONDS
+    Item:
+      Material: FEATHER
+      Name: '&aFlying Wing &7(Right Click)'
+      Amount: 1
+    Message:
+      Message: '%prefix% &7You have used a &bFlying Wing&7.'
+      Enabled: true
+    Sound:
+      Sound: ENDERDRAGON_WINGS
+      Pitch: 1
+      Enabled: true

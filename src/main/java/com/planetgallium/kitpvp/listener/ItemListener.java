@@ -5,6 +5,7 @@ import com.planetgallium.kitpvp.Game;
 import com.planetgallium.kitpvp.api.Ability;
 import com.planetgallium.kitpvp.api.ability.ArcherAbility;
 import com.planetgallium.kitpvp.api.ability.BomberAbility;
+import com.planetgallium.kitpvp.api.ability.FlyAbility;
 import com.planetgallium.kitpvp.api.ability.ItemAbility;
 import com.planetgallium.kitpvp.api.ability.KangarooAbility;
 import com.planetgallium.kitpvp.api.ability.NinjaAbility;
@@ -31,6 +32,8 @@ import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.metadata.MetadataValue;
 import org.bukkit.util.Vector;
@@ -65,6 +68,7 @@ public class ItemListener implements Listener {
         Arrays.asList(
                 new ArcherAbility(),
                 new BomberAbility(),
+                new FlyAbility(),
                 new KangarooAbility(),
                 new NinjaAbility(),
                 new RocketAbility(),
@@ -277,4 +281,22 @@ public class ItemListener implements Listener {
             }
 		}
 	}
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        for (ItemAbility ability : getAbilities()) {
+            if (ability.isTagged(event.getPlayer())) {
+                ability.close(event, event.getPlayer());
+            }
+        }
+    }
+
+    @EventHandler
+    public void onTeleport(PlayerTeleportEvent event) {
+        for (ItemAbility ability : getAbilities()) {
+            if (ability.isTagged(event.getPlayer())) {
+                ability.close(event, event.getPlayer());
+            }
+        }
+    }
 }

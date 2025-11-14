@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.UnaryOperator;
 
 public class Ability {
@@ -63,6 +64,7 @@ public class Ability {
     protected final List<String> commands;
 
     private Set<Class<? extends Event>> listeners;
+    private Set<UUID> tagged;
 
     public Ability(@NotNull String name) {
         this.name = name;
@@ -236,6 +238,10 @@ public class Ability {
         return this.listeners.contains(event);
     }
 
+    public boolean isTagged(@NotNull Player player) {
+        return this.tagged != null && this.tagged.contains(player.getUniqueId());
+    }
+
     public boolean isItem(@NotNull ItemStack item) {
         return activator.test(item);
     }
@@ -266,6 +272,17 @@ public class Ability {
         }
 
         return true;
+    }
+
+    protected void tag(@NotNull Player player) {
+        if (this.tagged == null) {
+            this.tagged = new HashSet<>();
+        }
+        this.tagged.add(player.getUniqueId());
+    }
+
+    protected boolean untag(@NotNull Player player) {
+        return this.tagged != null && this.tagged.remove(player.getUniqueId());
     }
 
     public void run(@NotNull Player player) {
@@ -335,6 +352,10 @@ public class Ability {
     }
 
     public void run(@NotNull EntityDamageByEntityEvent event, @NotNull Player player, @NotNull Player agent) {
+        // empty method
+    }
+
+    public void close(@NotNull Event event, @NotNull Player player) {
         // empty method
     }
 

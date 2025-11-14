@@ -19,6 +19,7 @@ public abstract class ItemAbility extends Ability {
 
     public static final String ARCHER = "Archer";
     public static final String BOMBER = "Bomber";
+    public static final String FLY = "Fly";
     public static final String KANGAROO = "Kangaroo";
     public static final String NINJA = "Ninja";
     public static final String ROCKET = "Rocket";
