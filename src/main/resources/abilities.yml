@@ -150,3 +150,18 @@ Abilities:
       Sound: ENDERMAN_TELEPORT
       Pitch: 1
       Enabled: true
+  Rocket:
+    Enabled: true
+    Cooldown: 0
+    boost: 1.5
+    Item:
+      Material: FIREWORK_ROCKET
+      Name: '&cRocket Launcher &7(Right Click)'
+      Amount: 3
+    Message:
+      Message: '%prefix% &7You have used a &bRocket Launcher&7.'
+      Enabled: true
+    Sound:
+      Sound: FIREWORK_LAUNCH
+      Pitch: 1
+      Enabled: true

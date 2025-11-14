@@ -8,6 +8,7 @@ import com.planetgallium.kitpvp.api.ability.BomberAbility;
 import com.planetgallium.kitpvp.api.ability.ItemAbility;
 import com.planetgallium.kitpvp.api.ability.KangarooAbility;
 import com.planetgallium.kitpvp.api.ability.NinjaAbility;
+import com.planetgallium.kitpvp.api.ability.RocketAbility;
 import com.planetgallium.kitpvp.api.ability.SoldierAbility;
 import com.planetgallium.kitpvp.api.ability.ThunderboltAbility;
 import com.planetgallium.kitpvp.api.ability.TricksterAbility;
@@ -66,6 +67,7 @@ public class ItemListener implements Listener {
                 new BomberAbility(),
                 new KangarooAbility(),
                 new NinjaAbility(),
+                new RocketAbility(),
                 new SoldierAbility(),
                 new ThunderboltAbility(),
                 new TricksterAbility(),
@@ -112,6 +114,7 @@ public class ItemListener implements Listener {
 		final Player player = event.getPlayer();
 		if ((event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) && Toolkit.inArena(player)) {
 			final ItemStack interactedItem = Toolkit.getHandItemForInteraction(event);
+            final XMaterial material = XMaterial.matchXMaterial(interactedItem);
 
             for (ItemAbility ability : getAbilities()) {
                 if (ability.isListening(PlayerInteractEvent.class)) {
@@ -121,7 +124,7 @@ public class ItemListener implements Listener {
                             break;
                         }
                         if (ability.isAllowed(player, true) && ability.isReady(player, true)) {
-                            if (XMaterial.matchXMaterial(interactedItem) == XMaterial.ENDER_PEARL) {
+                            if (material == XMaterial.ENDER_PEARL || material == XMaterial.FIREWORK_ROCKET) {
                                 event.setCancelled(true);
                             }
 
@@ -142,7 +145,7 @@ public class ItemListener implements Listener {
                 }
             }
 
-            if (XMaterial.matchXMaterial(interactedItem) == XMaterial.TNT) {
+            if (material == XMaterial.TNT) {
 				specialTNT(event, player, interactedItem);
 
 			}
