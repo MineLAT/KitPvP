@@ -79,8 +79,10 @@ public abstract class ItemAbility extends Ability {
     }
 
     protected void use(@NotNull Event event, @NotNull Player player, @Nullable Player agent, @NotNull ItemStack item) {
-        item.setAmount(item.getAmount() - 1);
-        Toolkit.setHandItemForInteraction(event, item);
+        if (this.itemAmount > 0) {
+            item.setAmount(item.getAmount() - this.itemAmount);
+            Toolkit.setHandItemForInteraction(event, item);
+        }
 
         run(player, agent);
 

@@ -11,7 +11,7 @@ Abilities:
       Name: '&aArcher''s Bow'
       Fire: '&aFire Arrows &eON &7(Right Click)'
       NoFire: '&aFire Arrows &cOFF &7(Right Click)'
-      Amount: 10
+      Amount: 1
     Message:
       Fire: '%prefix% &bFire Arrows &7are now &eON&7.'
       NoFire: '%prefix% &bFire Arrows &7are now &cOFF&7.'
@@ -28,7 +28,7 @@ Abilities:
     Item:
       Material: IRON_HOE
       Name: '&aGun &7(Right Click)'
-      Amount: 5
+      Amount: 1
     Sound:
       Sound: EXPLODE
       Pitch: 1
@@ -40,7 +40,7 @@ Abilities:
     Item:
       Material: COAL
       Name: '&aTNT Trail &7(Right Click)'
-      Amount: 3
+      Amount: 1
     Message:
       Message: '%prefix% &7You have used a &bTNT Trail&7.'
       Enabled: true
@@ -55,7 +55,7 @@ Abilities:
     Item:
       Material: SADDLE
       Name: '&aLauncher &7(Right Click)'
-      Amount: 3
+      Amount: 1
     Message:
       Message: '%prefix% &7You have used a &bLauncher&7.'
       Enabled: false
@@ -69,7 +69,7 @@ Abilities:
     Item:
       Material: ENDER_EYE
       Name: '&aNearest Player Teleporter &7(Right Click)'
-      Amount: 3
+      Amount: 1
     Message:
       Message: '%prefix% &7You have used a &bNearest Player Teleporter&7.'
       Enabled: true
@@ -97,7 +97,7 @@ Abilities:
     Item:
       Material: NETHER_STAR
       Name: '&aVanish Stars &7(Right Click)'
-      Amount: 3
+      Amount: 1
     Message:
       Message: '%prefix% &7You have used a &bVanish Star&7.'
       Enabled: true
@@ -113,7 +113,7 @@ Abilities:
     Item:
       Material: BLAZE_ROD
       Name: '&aLightning Strike &7(Click Player)'
-      Amount: 3
+      Amount: 1
     Message:
       Message: '%prefix% &7You have used a &bLighting Strike &7on &b%player%&7.'
       Enabled: true
@@ -128,7 +128,7 @@ Abilities:
     Item:
       Material: GHAST_TEAR
       Name: '&aBlood Suckers &7(Click Player)'
-      Amount: 3
+      Amount: 1
     Message:
       Message: '%prefix% &7You have sucked the blood of &b%player%&7. &c+ 3 Health'
       Enabled: true
@@ -142,7 +142,7 @@ Abilities:
     Item:
       Material: EGG
       Name: '&aSwitcher Pellets &7(Right Click)'
-      Amount: 4
+      Amount: 1
     Message:
       Message: '%prefix% &7You have switched places with &b%player%&7.'
       Enabled: true
@@ -157,7 +157,7 @@ Abilities:
     Item:
       Material: FIREWORK_ROCKET
       Name: '&cRocket Launcher &7(Right Click)'
-      Amount: 3
+      Amount: 1
     Message:
       Message: '%prefix% &7You have used a &bRocket Launcher&7.'
       Enabled: true
