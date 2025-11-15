@@ -11,6 +11,9 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 public class FlyAbility extends ItemAbility {
@@ -19,6 +22,8 @@ public class FlyAbility extends ItemAbility {
 
     private double jump = 0.5;
     private Timespan duration = Timespan.valueOf(3, TimeUnit.SECONDS);
+
+    private transient final Set<UUID> flyAllowed = new HashSet<>();
 
     public FlyAbility() {
         super(ItemAbility.FLY);
@@ -50,13 +55,19 @@ public class FlyAbility extends ItemAbility {
         if (jump > 0) {
             player.setVelocity(new Vector(0, this.jump, 0));
         }
+        if (!player.getAllowFlight()) {
+            this.flyAllowed.add(player.getUniqueId());
+            player.setAllowFlight(true);
+        }
         player.setFlying(true);
         tag(player);
         use(event, player, item);
 
         Bukkit.getScheduler().runTaskLater(plugin(), () -> {
             if (untag(player)) {
-                player.setFlying(false);
+                if (this.flyAllowed.remove(player.getUniqueId())) {
+                    player.setFlying(false);
+                }
                 player.setFallDistance(config().getBoolean("Arena.PreventFallDamage") ? -1000000 : -30);
             }
         }, this.duration.toTicks());
@@ -64,7 +75,9 @@ public class FlyAbility extends ItemAbility {
 
     @Override
     public void close(@NotNull Event event, @NotNull Player player) {
-        player.setFlying(false);
+        if (this.flyAllowed.remove(player.getUniqueId())) {
+            player.setFlying(false);
+        }
         untag(player);
     }
 }
