@@ -65,10 +65,11 @@ public class ChronoFormat {
 
         for (ChronoUnit unit : this.units) {
             final long unitLength = getLength(unit.getDuration());
-            final double amount = (double) length / unitLength;
-            if (amount > 0) {
+            final double amount = (double) length / (double) unitLength;
+            final String formatted = format(amount, unit);
+            if (!formatted.isEmpty()) {
+                joiner.add(formatted);
                 length -= unitLength * (long) amount;
-                joiner.add(format(amount, unit));
                 count++;
             }
             if (length <= 0 || count >= this.max) {
@@ -86,6 +87,9 @@ public class ChronoFormat {
 
     @NotNull
     public String format(long amount, @NotNull ChronoUnit unit) {
+        if (amount == 0) {
+            return "";
+        }
         if (amount == 1 || amount == -1) {
             return amount + " " + ChronoResource.SINGULAR.get(unit);
         } else {

@@ -17,13 +17,18 @@ public class Timespan {
 
     public static final Timespan ZERO = new Timespan(0L);
 
-    private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("0.#");
+    private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("#.#");
     public static final ChronoFormat READABLE_FORMAT = new ChronoFormat(Arrays.asList(
             ChronoUnit.DAYS,
             ChronoUnit.HOURS,
             ChronoUnit.MINUTES,
             ChronoUnit.SECONDS
     ), " ", Integer.MAX_VALUE) {
+        @Override
+        public long getLength(@NotNull Duration duration) {
+            return duration.toMillis();
+        }
+
         @Override
         public @NotNull String format(double amount, @NotNull ChronoUnit unit) {
             final String formatted;
@@ -33,6 +38,9 @@ public class Timespan {
                 singular = amount == 1 || amount == -1;
             } else {
                 final long num = (long) amount;
+                if (num == 0) {
+                    return "";
+                }
                 formatted = String.valueOf(num);
                 singular = num == 1 || num == -1;
             }
