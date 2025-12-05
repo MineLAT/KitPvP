@@ -40,14 +40,28 @@ import org.bukkit.util.Vector;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Predicate;
 
 public class ItemListener implements Listener {
+
+    private static final boolean PROJECTILE_COMPATIBLE;
+
+    static {
+        boolean projectileCompatible = false;
+        try {
+            Class.forName("org.bukkit.entity.ThrowableProjectile");
+            projectileCompatible = true;
+        } catch (Throwable ignored) { }
+        PROJECTILE_COMPATIBLE = projectileCompatible;
+    }
 
 	private final Game plugin;
 	private final Arena arena;
@@ -56,6 +70,7 @@ public class ItemListener implements Listener {
 	private final Resource config;
 
     private final Map<String, ItemAbility> itemAbilities;
+    private transient final Map<UUID, List<ItemAbility>> projectileSent = new HashMap<>();
 	
 	public ItemListener(Game plugin) {
 		this.plugin = plugin;
@@ -145,6 +160,14 @@ public class ItemListener implements Listener {
                                 witchAbility.runSplash(event, player, interactedItem);
                             }
                         }
+                    }
+                } else if (!PROJECTILE_COMPATIBLE && ability.isListening(ProjectileLaunchEvent.class) && ability.isItem(interactedItem)) {
+                    if (!utilities.isCombatActionPermittedInRegion(player) || !Toolkit.isAbilityPlayer(player, true)) {
+                        event.setCancelled(true);
+                        break;
+                    }
+                    if (ability.isAllowed(player, true) && ability.isReady(player, true)) {
+                        projectileSent.computeIfAbsent(player.getUniqueId(), __ -> new ArrayList<>()).add(ability);
                     }
                 }
             }
@@ -245,21 +268,32 @@ public class ItemListener implements Listener {
 
     @EventHandler
     public void onProjectileLaunch(ProjectileLaunchEvent event) {
-        if (event.getEntity() instanceof ThrowableProjectile && event.getEntity().getShooter() instanceof Player) {
-            final ThrowableProjectile projectile = (ThrowableProjectile) event.getEntity();
-            final Player player = (Player) projectile.getShooter();
-            if (Toolkit.inArena(player)) {
-                for (ItemAbility ability : getAbilities()) {
-                    if (ability.isListening(ProjectileLaunchEvent.class) && ability.isItem(projectile.getItem())) {
-                        if (!utilities.isCombatActionPermittedInRegion(player) || !Toolkit.isAbilityPlayer(player, true)) {
-                            event.setCancelled(true);
-                            break;
-                        }
-                        if (ability.isAllowed(player, true) && ability.isReady(player, true)) {
-                            ability.run(event, player);
+        if (PROJECTILE_COMPATIBLE) {
+            if (event.getEntity() instanceof ThrowableProjectile && event.getEntity().getShooter() instanceof Player) {
+                final ThrowableProjectile projectile = (ThrowableProjectile) event.getEntity();
+                final Player player = (Player) projectile.getShooter();
+                if (Toolkit.inArena(player)) {
+                    for (ItemAbility ability : getAbilities()) {
+                        if (ability.isListening(ProjectileLaunchEvent.class) && ability.isItem(projectile.getItem())) {
+                            if (!utilities.isCombatActionPermittedInRegion(player) || !Toolkit.isAbilityPlayer(player, true)) {
+                                event.setCancelled(true);
+                                break;
+                            }
+                            if (ability.isAllowed(player, true) && ability.isReady(player, true)) {
+                                ability.run(event, player);
+                            }
                         }
                     }
                 }
+            }
+        } else if (event.getEntity().getShooter() instanceof Player) {
+            final Player player = (Player) event.getEntity().getShooter();
+            final List<ItemAbility> abilities = projectileSent.get(player.getUniqueId());
+            if (abilities != null && !abilities.isEmpty()) {
+                for (ItemAbility ability : abilities) {
+                    ability.run(event, player);
+                }
+                abilities.clear();
             }
         }
     }
