@@ -3,6 +3,7 @@ package com.planetgallium.kitpvp.api.ability;
 import com.cryptomorin.xseries.XMaterial;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
@@ -39,6 +40,10 @@ public class RocketAbility extends ItemAbility {
 
     @Override
     public void run(@NotNull PlayerInteractEvent event, @NotNull Player player, @NotNull ItemStack item) {
+        if (event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+            return;
+        }
+
         final Vector boost = player.getLocation().getDirection().multiply(this.boost);
         player.setVelocity(boost);
         player.setFallDistance(config().getBoolean("Arena.PreventFallDamage") ? -1000000 : -30);
