@@ -361,7 +361,7 @@ public class Ability {
 
     protected void cooldown(@NotNull Player player) {
         if (this.cooldown != Timespan.ZERO) {
-            Game.getInstance().getArena().getCooldowns().setAbilityCooldown(player.getUniqueId(), this);
+            Game.getInstance().getArena().getCooldowns().setAbilityCooldown(player, this);
         }
     }
 

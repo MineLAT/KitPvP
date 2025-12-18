@@ -2,6 +2,7 @@ package com.planetgallium.kitpvp;
 
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.event.PacketListenerPriority;
+import com.planetgallium.kitpvp.apollo.listener.ApolloPlayerJsonListener;
 import com.planetgallium.kitpvp.game.Infobase;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -29,6 +30,8 @@ public class Game extends JavaPlugin implements Listener {
 	private Arena arena;
 	private Infobase database;
 	private Resources resources;
+
+    private ApolloPlayerJsonListener apolloListener;
 	
 	private String updateVersion = "Error";
 	private boolean needsUpdate = false;
@@ -63,6 +66,11 @@ public class Game extends JavaPlugin implements Listener {
 		pm.registerEvents(new TrackerListener(this), this);
 		pm.registerEvents(new MenuListener(this), this);
 		pm.registerEvents(getArena().getKillStreaks(), this);
+
+        apolloListener = new ApolloPlayerJsonListener(this);
+        if (resources.getConfig().getBoolean("Other.LunarClientHook")) {
+            apolloListener.enable();
+        }
 		
 		getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
 	    getCommand("kitpvp").setExecutor(new MainCommand(this));
@@ -95,6 +103,16 @@ public class Game extends JavaPlugin implements Listener {
 
 		Toolkit.printToConsole("&7[&b&lKIT-PVP&7] &aDone!");
 	}
+
+    public void onReload() {
+        if (resources.getConfig().getBoolean("Other.LunarClientHook")) {
+            if (!apolloListener.isEnabled()) {
+                apolloListener.enable();
+            }
+        } else if (apolloListener.isEnabled()) {
+            apolloListener.disable();
+        }
+    }
 
 	private void populateUUIDCacheForOnlinePlayers() {
 		// populates UUID cache if there are players online when doing /reload to avoid a lot of errors related
@@ -172,5 +190,8 @@ public class Game extends JavaPlugin implements Listener {
 	public static String getPrefix() { return prefix; }
 	
 	public Resources getResources() { return resources; }
-	
+
+    public ApolloPlayerJsonListener getApolloListener() {
+        return apolloListener;
+    }
 }

@@ -134,6 +134,7 @@ Arena:
   ArmorInvisibility: true
 Other:
   AutomaticallyAddKitToMenu: true
+  LunarClientHook: true
 Spawn:
   Time: 5
   Enabled: true
